@@ -38,9 +38,6 @@
 ## 3. Functional Requirements
 
 ### Must Have (P1)
-## 3. Functional Requirements
-
-### Must Have (P1)
 - System MUST ingest raw datasets from CSV, XLSX, and database tables.
 - System MUST reject empty input files.
 - System MUST require input data to have a valid tabular structure.
