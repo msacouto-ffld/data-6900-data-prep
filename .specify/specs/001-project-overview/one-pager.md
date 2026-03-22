@@ -11,7 +11,7 @@ Design and implement an AI-assisted data preprocessing pipeline that transforms 
 - Data & Analytics Teams in regulated or high-stakes environments  
 
 **Core Value Proposition:**  
-Move from fragmented, manual data preparation to a **standardized, reproducible, and explainable preprocessing layer** that supports reliable decision-making. :contentReference[oaicite:0]{index=0}
+Move from fragmented, manual data preparation to a **standardized, reproducible, and explainable preprocessing layer** that supports reliable decision-making. 
 
 ---
 
@@ -25,7 +25,7 @@ Data teams today spend significant time on repetitive preprocessing tasks:
 While existing tools (e.g., AutoML platforms, Python libraries) provide partial solutions, they often:
 - Lack transparency or auditability  
 - Apply generic logic not tailored to business context  
-- Fall short in regulated environments requiring explainability and control :contentReference[oaicite:1]{index=1}  
+- Fall short in regulated environments requiring explainability and control 
 
 ---
 
@@ -38,7 +38,7 @@ We propose a **hybrid architecture combining deterministic pipelines with AI-ass
 - **Code-first for standard tasks**  
   (e.g., missing values, deduplication, type handling)  
 - **AI-assisted layer for interpretation and explanation**  
-  (e.g., data quality insights, feature extraction from text, anomaly interpretation) :contentReference[oaicite:2]{index=2}  
+  (e.g., data quality insights, feature extraction from text, anomaly interpretation)
 - **Full auditability and reproducibility** across all transformations  
 
 ---
