@@ -1,6 +1,6 @@
 # AI-Assisted Data Prep Pipeline Constitution
 
-## Version B: Python Tools MVP (Claude Code deferred to V2)
+**Version**: v1.0.1 | **Ratified**: 2026-03-24 | **Last Amended**: 2026-03-30
 
 ---
 
@@ -8,33 +8,33 @@
 
 ### I. Purpose & Scope
 
-This project transforms raw, messy CSV files into clean, decision-ready datasets through a two-module pipeline built as standard Python scripts, executed locally via CLI. Claude Code with Claude Agent Skills is planned for V2. The pipeline serves two primary user groups: non-technical business users (Level B) who interact with Module A (Data Cleaning), and data scientists who interact with Module B (Feature Engineering).
+This project transforms raw, messy CSV files into clean, decision-ready datasets through an LLM-powered two-module pipeline. The pipeline uses Claude 4.5 Sonnet as its core runtime engine to analyze data, judge the best transformation approaches, interact with users in plain language, and generate documentation.
+
+The pipeline serves two primary user groups: non-technical business users (Level B) who interact with Module A (Data Cleaning), and data scientists who interact with Module B (Feature Engineering).
 
 - **Problem:** Raw CSV data requires significant manual effort to clean, validate, and prepare for analysis or modeling.
 - **Primary users:** Non-technical business stakeholders (Module A) and data scientists (Module B).
 - **Outcome that matters most:** Trustworthy, well-documented, decision-ready data — with zero tolerance for hallucinated or fabricated transformations.
 - **MVP scope:** Tabular CSV data only. Single file in, single output out. Consumer credit banking data is deferred to post-MVP.
-- **MVP platform:** Standard Python scripts executed locally via CLI. No AI dependency — the pipeline is fully deterministic.
-- **V2 platform:** Claude Code with Claude Agent Skills, adding AI-assisted interaction, natural-language approval, and inline explanations.
+- **MVP platform:** Claude.ai with built-in Python tools. Users upload CSVs, interact with the LLM in natural language, and receive cleaned data plus documentation.
+- **V2 platform:** Claude Code with Claude Agent Skills, adding richer interaction, local Python environment, and advanced testing capabilities.
+- **LLM:** Claude 4.5 Sonnet (Anthropic). The LLM is a core runtime component — it analyzes data, makes transformation recommendations, interacts with users, and generates documentation.
 
 ### II. AI as Overconfident Intern
 
-In V2, when Claude Code is introduced, AI will be treated as a capable but unreliable assistant. All AI-generated outputs must pass through the Verification Ritual before acceptance. Humans remain responsible for all final decisions.
+The LLM (Claude 4.5 Sonnet) is treated as a capable but unreliable assistant. It may suggest plausible-sounding but incorrect transformation strategies. All LLM-generated suggestions must be reviewed and approved by a human before execution. Humans remain responsible for all final decisions.
 
-**MVP (Python Tools):** The pipeline is deterministic — no AI generation. The "overconfident intern" principle applies to the transformation logic itself: all suggested transformations must be presented to the user for approval before execution, even though they are rule-based.
-
-**V2 (Claude Code):** The full Verification Ritual applies:
-  1. **Read:** Review the transformation report (plain-language summary with justification).
-  2. **Run:** Execute the associated scripts and tools.
-  3. **Test:** Run unit tests (Pandera for schema validation) and property-based tests (Hypothesis for edge cases). Tests use a hybrid approach — pre-defined templates for common cases, dynamically generated for edge cases.
+**Verification Ritual:**
+  1. **Read:** Review the LLM's suggested transformation and its plain-language justification.
+  2. **Run:** Execute the approved transformation via Python tools.
+  3. **Test:** Verify the output (MVP: manual review of before/after comparisons; V2: automated tests with Pandera and Hypothesis).
   4. **Commit:** Accept only verified, human-approved output.
 
 **Applies to both MVP and V2:**
-- **Module/Skill Handoff Contract:** Module A produces a standardized output format that Module B expects. If Module B detects issues with Module A's output, Module B stops and flags the issue for human review.
+- **Module Handoff Contract:** Module A produces a standardized output format that Module B expects. If Module B detects issues with Module A's output, Module B stops and flags the issue for human review.
 - **Mistake Logging:** Each module maintains its own mistake log. The PM aggregates logs into a summary report and uses recurring patterns to trigger Constitution updates.
-- **Approval Model (MVP):** Modules pause and present a plain-language approval step via CLI prompts. Users can approve (y/n) or request more detail. On rejection, the module presents the next best alternative.
-- **Approval Model (V2):** Skills pause and present an interactive, plain-language approval step directly in Claude Code. Users can APPROVE, REJECT, or request EXPLAIN MORE.
-- **Batch Mode (MVP):** A `--auto-approve` flag allows experienced users to skip confirmations for transformations below a configurable risk threshold. Transformations above the threshold always require explicit approval.
+- **Approval Model:** The LLM presents transformation suggestions with justification in natural language. Users approve, reject, or ask for more detail in natural language. On rejection, the LLM presents the next best alternative with justification.
+- **LLM Data Access:** The LLM has access to the full dataset via Python tools. It analyzes the complete data to make informed recommendations.
 
 ### III. Plain-Language Commitment
 
@@ -48,13 +48,12 @@ All specs, plans, documentation, and transformation reports must be understandab
   2. Why?
   3. What alternatives were considered (and why were they rejected)?
   4. What is the impact?
-- For trivial transformations, a lightweight version of the template is acceptable at the team's discretion.
 - **Plain-Language Tests:**
   - Every metric must be given context (e.g., percentage of rows affected, column name, before/after comparison).
   - New features must include benchmark comparisons.
   - Jargon scan: no undefined acronyms, no unexplained terminology.
-- **Output format (MVP):** Transformation reports are generated as markdown files alongside the output CSV.
-- **Output format (V2):** Transformation reports are generated and presented inline in Claude Code with AI explanation.
+- **Output format (MVP):** Transformation reports generated as markdown files by the LLM, downloadable from Claude.ai alongside the output CSV.
+- **Output format (V2):** Transformation reports generated and presented inline in Claude Code.
 
 ### IV. Guardrails Over Features
 
@@ -62,7 +61,7 @@ Guardrails are first-class citizens in this project. Decisions about security, d
 
 - **Non-Negotiable Guardrails** (cannot be overridden without a Major version change):
   - Security and PII rules
-  - Zero hallucination tolerance (MVP: deterministic pipeline; V2: Verification Ritual)
+  - Zero hallucination tolerance — all LLM suggestions require human approval before execution
   - Human-in-the-loop approval for all transformations
 - **Discussable Guardrails** (can be relaxed with full team consensus):
   - All other rules and constraints
@@ -81,6 +80,7 @@ This Constitution is a living document. It is versioned and updated as the team 
   - Guardrails found to be overly restrictive but safe
   - Inconsistencies between Constitution and actual practice
   - V2 migration decisions that require Constitution amendments
+  - LLM model updates or behavior changes
 - **Update Responsibilities:**
   - PM updates the Constitution and project overview.
   - Module Owners update their respective specs.
@@ -95,59 +95,70 @@ This Constitution is a living document. It is versioned and updated as the team 
 
 ### Platform
 
-| Phase | Platform | Details |
-|-------|----------|---------|
-| **MVP** | Standard Python scripts (local CLI) | Deterministic pipeline, no AI dependency |
-| **V2** | Claude Code (local) | Claude Agent Skills, auto-discovered from `.claude/skills/` |
+| Phase | Platform | LLM | Python Execution |
+|-------|----------|-----|-----------------|
+| **MVP** | Claude.ai | Claude 4.5 Sonnet | Claude.ai's built-in Python tools (sandboxed) |
+| **V2** | Claude Code | Claude 4.5 Sonnet | Full local Python environment + Agent Skills |
+
+### LLM Configuration
+
+- **Model:** Claude 4.5 Sonnet (Anthropic)
+- **Role:** Core runtime component — analyzes data, recommends transformations, interacts with users, generates documentation
+- **Data Access:** Full dataset (uploaded by user to Claude.ai)
+- **Intent:** Low temperature / high consistency for maximum reproducibility (to be enforced in V2 where temperature control is available)
 
 ### Approved Languages & Frameworks
 
-- **Primary language:** Python 3.10+ (team to confirm minimum version)
+- **Primary language:** Python (version as provided by Claude.ai's Python tools environment)
 - **Philosophy:** Vanilla Python first. Libraries are introduced only for tasks that are error-prone or impractical to implement from scratch.
-- **MVP dependencies:**
+- **MVP dependencies (pre-installed in Claude.ai):**
   - `pandas` — dataframe manipulation
+  - `numpy` — numerical operations
+  - Vanilla Python standard library
+- **V2 dependencies (Claude Code — can pip install):**
+  - All MVP dependencies, plus:
   - `pandera` — schema validation
   - `hypothesis` — property-based testing
-  - `numpy` — numerical operations
   - `pytest` — test runner
-- **Provisional:** `scikit-learn` — to be determined based on Module B requirements
-- **Post-MVP (V2):** `great_expectations` — advanced data validation
+- **Provisional:** `scikit-learn` — to be determined based on Module B requirements (V2)
+- **Post-MVP:** `great_expectations` — advanced data validation (V2)
 - **Prohibited:** No frameworks or libraries outside the approved list without PM + Module Owner approval and a compatibility test.
 
 ### Dependency Management
 
-- Version ranges specified in `requirements.txt`.
-- New library adoption requires: PM + relevant Module Owner approval → compatibility test before integration.
+- MVP: Limited to pre-installed libraries in Claude.ai. No pip install capability.
+- V2: Version ranges specified in `requirements.txt`. New library adoption requires PM + relevant Module Owner approval → compatibility test before integration.
 
-### User Interaction (MVP)
+### User Interaction
 
-- Users interact with modules via CLI commands.
-- **Approval UX:** Plain-language CLI prompts → user confirms (y/n) or selects from options.
-- On rejection, the module presents the next best alternative option.
-- `--help` flag with human-readable descriptions for every command.
-- `--auto-approve` flag for experienced users (configurable risk threshold).
-- Pre-configured defaults so non-technical users can run with minimal flags.
+- **MVP (Claude.ai):** Users interact with the LLM in natural language. The LLM presents transformation suggestions with justification. Users approve, reject, or ask for clarification — all in natural language conversation.
+- **V2 (Claude Code):** Users interact with skills directly in Claude Code. Standardized APPROVE / REJECT / EXPLAIN MORE interaction pattern. On rejection, the skill presents the next best alternative automatically.
 
-### User Interaction (V2)
+### MVP Workflow
 
-- Users interact with skills directly in Claude Code.
-- **Approval UX:** Standardized APPROVE / REJECT / EXPLAIN MORE interaction pattern.
-- On rejection, the skill presents the next best alternative automatically.
+1. User uploads a raw CSV to Claude.ai
+2. Claude 4.5 Sonnet reads the full dataset via Python tools
+3. Claude analyzes the data, identifies issues, and suggests transformations with justification
+4. User approves or rejects each suggestion in natural language
+5. On rejection, Claude presents the next best alternative with justification
+6. Claude executes approved transformations via Python tools
+7. Claude generates a transformation report (markdown) following the 4-part justification template
+8. User downloads the cleaned/engineered CSV and the transformation report
 
 ### Output Format
 
 - **Data output:** CSV (cleaned and/or feature-engineered)
 - **Reports:** Markdown files (transformation reports, data quality reports)
-- **Logs:** Structured format (JSON or similar), never containing data values
+- **Logs:** Structured format, never containing raw data values
 
 ### V2 Migration Design Principles
 
-To minimize rework when transitioning from MVP (Python tools) to V2 (Claude Code):
+To minimize rework when transitioning from MVP (Claude.ai) to V2 (Claude Code):
 
 1. **Module boundaries = Skill boundaries:** Module A and Module B are designed with the same input/output contracts that future Agent Skills will use.
 2. **Standardized handoff format:** The intermediate format between Module A and Module B is identical to the future Skill A → Skill B handoff contract.
 3. **Report templates:** The same markdown justification template is used in MVP reports and future Claude Code inline reports.
-4. **Test suite portability:** All pytest, pandera, and hypothesis tests work identically in both environments.
+4. **Test suite portability:** Manual verification steps in MVP are documented so they can be converted to automated tests (Pandera, Hypothesis) in V2.
 5. **SKILL.md preparation:** Each module's purpose, inputs, outputs, and constraints are documented in a format that can be directly converted to `SKILL.md` files for Claude Code.
 
 
@@ -156,12 +167,9 @@ To minimize rework when transitioning from MVP (Python tools) to V2 (Claude Code
 ### Secrets & Credentials
 
 - **Never** hardcode API keys, tokens, or passwords in code.
-- Store secrets in a local `.env` file only.
-- `.gitignore` must include `.env` before any version control system is adopted.
-- **Never** copy or share session tokens or authentication details.
+- **MVP Note:** No API key management needed — Claude.ai handles authentication. Users interact through the Claude.ai interface.
+- **V2 Note:** Claude Code introduces direct API interaction. Store secrets in a local `.env` file. `.gitignore` must include `.env` before any version control system is adopted.
 - If a secret is accidentally committed, it must be **rotated immediately**. Removal from the repository alone is not sufficient.
-- **MVP Note:** No API keys are needed in this phase (no external services). These rules activate when API-based access is introduced.
-- **V2 Note:** Claude Code introduces Anthropic API interaction. API credentials must follow these rules.
 
 ### PII & Sensitive Data
 
@@ -169,17 +177,16 @@ To minimize rework when transitioning from MVP (Python tools) to V2 (Claude Code
   - Direct: names, emails, phone numbers, SSNs, addresses
   - Indirect: date of birth, zip code, job title
   - Financial: account numbers, credit card numbers, transaction details
-- **Detection:** Hybrid approach — automated scan flags potential PII, human confirms.
-- **V1 Behavior:** Basic warning only (e.g., "Column X may contain PII — proceed with caution").
+- **Detection:** Hybrid approach — LLM flags potential PII during analysis, human confirms.
+- **V1 Behavior:** Basic warning only (e.g., "Column X may contain PII — proceed with caution"). MVP uses open-source, non-sensitive datasets only.
 - **Post-MVP Behavior:** Pipeline stops and alerts the user. Cannot proceed until PII is handled. User must mask or anonymize data externally and re-upload.
-- **Logging:** Data values must **never** appear in logs. All identifiers must be masked or hashed.
-- **V1 Data Source:** Open-source CSVs (e.g., Kaggle) — no sensitive data.
+- **Logging:** Raw data values must **never** appear in logs or be persisted outside the active Claude.ai session. All identifiers must be masked or hashed in any exported logs.
 
 ### External Services & Data Sharing
 
-- **External APIs (MVP):** None — the pipeline is fully local. No data leaves the local environment.
-- **External APIs (V2):** Data processed through Anthropic's API via Claude Code. Only non-sensitive, anonymized data is permitted.
-- **Data Residency:** All data (input, processing, output, logs) remains on the local file system.
+- **Data Transit (MVP):** Data is uploaded to Claude.ai and processed through Anthropic's API. This is accepted for non-sensitive, open-source data. The security guardrail is relaxed for the MVP given that only non-sensitive data is used.
+- **Data Transit (V2):** Data processed through Anthropic's API via Claude Code. PII must be anonymized locally before any LLM interaction.
+- **Data Residency:** Input data resides in Claude.ai during the session. Output data (cleaned CSV, reports) is downloaded by the user to their local system.
 - **Team Sharing:** Via Git repository. No PII and no secrets in the repo.
 - **Large Files:** Only sample data (small subsets) committed to the repo. Full datasets are stored locally.
 
@@ -190,8 +197,8 @@ To minimize rework when transitioning from MVP (Python tools) to V2 (Claude Code
 
 The following features are intentionally **not** being built in V1:
 
-- Claude Code / AI-assisted interaction — deferred to V2
-- Web UI or dashboard — interaction is through CLI only
+- Claude Code / Agent Skills — deferred to V2
+- Web UI or dashboard — interaction is through Claude.ai's conversational interface
 - Automated model training on cleaned data — the pipeline ends at clean, feature-engineered data plus documentation
 - Multi-file joins or merging multiple CSVs — single CSV in, single output out
 - Consumer credit banking data processing — deferred to post-MVP
@@ -199,9 +206,10 @@ The following features are intentionally **not** being built in V1:
 
 ### Technical Exclusions
 
-- Cloud deployment — the pipeline is fully local
+- Cloud deployment — data processed via Anthropic's API only
+- `pandera`, `hypothesis`, `pytest` — not available in Claude.ai; deferred to V2
 - `great_expectations` — deferred to V2
-- `scikit-learn` — provisional, to be determined for Module B
+- `scikit-learn` — provisional, to be determined for Module B (V2)
 - XLSX or database table ingestion — deferred to V2
 
 ### V1 Definition of Done
@@ -216,7 +224,7 @@ V1 is a **robust tool** that handles edge cases, not a happy-path proof of conce
 - Special characters in column names (spaces, emojis, unicode)
 - Duplicate column names
 
-**Success criteria:** The pipeline must successfully process 3 CSVs end-to-end via CLI, producing clean data, engineered features, and full documentation for each:
+**Success criteria:** The pipeline must successfully process 3 CSVs end-to-end in Claude.ai, producing clean data, engineered features, and full documentation for each:
 
 1. **NYC TLC Trip Records** — large, messy, time and location fields
 2. **Kaggle — Instacart Online Grocery Shopping / Dunnhumby "The Complete Journey"** — retail transaction data
@@ -288,4 +296,4 @@ Changes to this Constitution follow semantic versioning:
 
 ---
 
-**Version**: v1.0.0 | **Ratified**: 2026-03-25 | **Last Amended**: 2026-03-25
+**Version**: v1.0.0 | **Ratified**: 2026-03-30 | **Last Amended**: 2026-03-30
