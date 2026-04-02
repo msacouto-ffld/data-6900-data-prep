@@ -1,6 +1,6 @@
 # AI-Assisted Data Prep Pipeline — Project Overview
 
-**Version**: 1.0 | **Date**: 2026-03-30 | **Status**: Under Review
+**Version**: 2.0 | **Date**: 2026-04-02 | **Status**: Under Review
 
 ---
 
@@ -13,22 +13,22 @@
 | Role | Person | Ownership |
 |------|--------|-----------|
 | PM | Margarida Sacouto | Constitution, project overview, coordination |
-| Module A Owner | Xiao Pan | Data Cleaning (missing values, duplicates, type consistency, outliers, column names) |
-| Module B Owner | Valerie Bien-Aime | Feature Engineering (feature generation, transformation documentation) |
+| Skill A Owner | Xiao Pan | Data Cleaning (missing values, duplicates, type consistency, outliers, column names) |
+| Skill B Owner | Valerie Bien-Aime | Feature Engineering (feature generation, transformation documentation) |
 
 - **Primary Users:**
 
-| User Group | Module | Technical Level |
-|------------|--------|-----------------|
-| Non-technical business stakeholders | Module A (primary) | Level B — understands data concepts (e.g., "null," "duplicate"), cannot code |
-| Data scientists | Module B (primary), Module A (secondary) | Technical — comfortable with code and statistical concepts |
-| Data analysts | Module A (secondary), Module B (secondary) | Intermediate — works with data tools but may not code extensively |
+| User Group | Skill | Technical Level |
+|------------|-------|-----------------|
+| Non-technical business stakeholders | Skill A (primary) | Level B — understands data concepts (e.g., "null," "duplicate"), cannot code |
+| Data scientists | Skill B (primary), Skill A (secondary) | Technical — comfortable with code and statistical concepts |
+| Data analysts | Skill A (secondary), Skill B (secondary) | Intermediate — works with data tools but may not code extensively |
 
 - **Problem Statement:** Data scientists, data analysts, and non-technical business stakeholders spend significant time preparing large, messy datasets for analysis and modeling. Common repetitive tasks include format transformations (such as floats and dates), identifying and removing duplicates or near-duplicates, handling missing values through strategies such as dropping or imputing records, and extracting features. All of these tasks require careful documentation to maintain auditability and trust — yet documentation is often incomplete or inconsistent.
 
-- **Goal:** Enable teams to produce consistent, auditable, and decision-ready datasets with reduced manual effort and controlled risk. The pipeline must document every transformation decision in plain language with justification, and all LLM-suggested actions must be approved by a human before execution.
+- **Goal:** Enable teams to produce consistent, auditable, and decision-ready datasets with reduced manual effort and controlled risk. The pipeline must document every transformation decision in plain language with justification. All LLM-suggested actions must pass through an internal validation loop (LLM personas challenging assumptions) before execution.
 
-- **Hallucination Tolerance:** **ZERO — Catastrophic.** The LLM (Claude 4.5 Sonnet) may suggest plausible but incorrect transformation strategies. All suggestions must be reviewed and approved by a human before execution. The Verification Ritual (Read → Run → Test → Commit) applies to every transformation.
+- **AI as Overconfident Intern:** The LLM (Claude 4.5 Sonnet) is treated as a capable but unreliable assistant. It may suggest plausible-sounding but incorrect transformation strategies. All LLM-generated suggestions must pass through an internal validation loop where different LLM personas challenge the initial suggestion, resulting in a robust final decision with a confidence score. The Verification Ritual (Read → Run → Test → Commit) applies to every transformation.
 
 - **LLM:** Claude 4.5 Sonnet (Anthropic). The LLM is a core runtime component — it analyzes data, recommends transformation approaches, interacts with users in natural language, and generates documentation.
 
@@ -47,25 +47,13 @@
 
 - **Given:** A user has a raw, messy CSV dataset
 
-- **When:** The user uploads the CSV to Claude.ai and requests the full preprocessing pipeline (Module A → Module B)
+- **When:** The user uploads the CSV to Claude.ai and requests the full preprocessing pipeline (Skill A → Skill B)
 
-- **Then:** Claude 4.5 Sonnet reads the full dataset via Python tools, analyzes it, identifies issues, and suggests cleaning and feature engineering transformations with justification — presenting each action for human approval in natural language before execution — and returns a cleaned, feature-engineered CSV along with a plain-language transformation report (markdown) following the mandatory justification template (What was done? Why? Alternatives considered and why rejected? Impact?)
+- **Then:** Claude 4.5 Sonnet reads the full dataset via Python tools, analyzes it, identifies issues, and suggests cleaning and feature engineering transformations with justification. LLM personas internally challenge the suggestions and arrive at a robust final decision with a confidence score. Claude executes the approved transformations and returns a cleaned, feature-engineered CSV along with a plain-language transformation report (markdown) following the mandatory justification template (What was done? Why? What is the impact?). The final report includes the LLM's confidence score in each decision.
 
-- **Test:** Upload a sample raw CSV to Claude.ai, run the pipeline, and verify that (1) data is cleaned and transformed correctly, (2) every transformation was approved by the user before execution, and (3) a complete transformation report is generated as a downloadable markdown file following the justification template
+- **Test:** Upload a sample raw CSV to Claude.ai, run the pipeline, and verify that (1) data is cleaned and transformed correctly, (2) every transformation went through the internal LLM persona validation loop, (3) the final report includes confidence scores for each decision, and (4) a complete transformation report is generated as a downloadable markdown file following the 3-part justification template
 
-### Scenario 2: Run Data Cleaning Only (Module A)
-
-- **Priority:** P2
-
-- **Given:** A user has a raw CSV dataset with missing values, duplicates, type inconsistencies, and/or messy column names
-
-- **When:** The user uploads the CSV to Claude.ai and requests only Module A for data cleaning
-
-- **Then:** Claude 4.5 Sonnet detects issues, suggests cleaning actions with justification in natural language, waits for human approval, executes approved actions via Python tools, and returns cleaned data along with a markdown report explaining the steps taken and the rationale behind them
-
-- **Test:** Upload a CSV with missing values, duplicates, and mixed types. Run only Module A. Verify that (1) the output dataset reflects the expected cleaning logic, (2) every action was presented for approval before execution, (3) rejected actions triggered the next best alternative, and (4) the documentation follows the mandatory justification template
-
-### Scenario 3: Handle Conflicting Duplicates
+### Scenario 2: Handle Conflicting Duplicates
 
 - **Priority:** P2
 
@@ -73,21 +61,9 @@
 
 - **When:** The user uploads the CSV to Claude.ai and runs the preprocessing pipeline
 
-- **Then:** Claude 4.5 Sonnet detects the conflicting duplicates, presents the suggested handling logic for human approval in natural language or flags them for review, and documents the actions taken with justification
+- **Then:** Claude 4.5 Sonnet detects the conflicting duplicates, presents the suggested handling logic with justification (validated through the LLM persona loop), and documents the actions taken with confidence scores
 
-- **Test:** Upload a dataset containing duplicate or near-duplicate records with conflicting fields, run the pipeline, and verify that conflicts are either resolved according to approved rules or clearly flagged, with documentation included in the output
-
-### Scenario 4: Run Feature Engineering Only (Module B)
-
-- **Priority:** P2
-
-- **Given:** A user has a cleaned dataset (output of Module A or pre-cleaned data)
-
-- **When:** The user uploads the CSV to Claude.ai and requests only Module B for feature engineering
-
-- **Then:** Claude 4.5 Sonnet suggests relevant features with justification in natural language, waits for human approval, generates approved features via Python tools, and produces a markdown report with before/after comparisons and benchmark references
-
-- **Test:** Upload a cleaned CSV, run only Module B, and verify that (1) suggested features are relevant and justified, (2) the user approved each feature before generation, and (3) documentation includes benchmark comparisons
+- **Test:** Upload a dataset containing duplicate or near-duplicate records with conflicting fields, run the pipeline, and verify that conflicts are either resolved according to the validated approach or clearly flagged, with documentation included in the output
 
 ### Edge Cases
 
@@ -95,8 +71,8 @@ The pipeline must handle the following edge cases robustly (V1 requirement):
 
 - Empty CSV (headers only, no rows) — fail with clear error message
 - Single-row CSV — process with appropriate warnings about statistical limitations
-- All values missing in a column — detect, suggest handling strategy, await approval
-- Mixed types in a single column (e.g., "123", "abc", "45.6") — detect, suggest type resolution, await approval
+- All values missing in a column — detect, suggest handling strategy, validate through persona loop
+- Mixed types in a single column (e.g., "123", "abc", "45.6") — detect, suggest type resolution, validate through persona loop
 - Special characters in column names (spaces, emojis, unicode) — detect and suggest standardization
 - Duplicate column names — detect and suggest resolution
 - Required columns missing — fail with clear error message indicating impact
@@ -117,31 +93,51 @@ The pipeline must handle the following edge cases robustly (V1 requirement):
 - The LLM MUST have access to the full dataset via Claude.ai's Python tools.
 - The LLM MUST analyze the complete data before making recommendations.
 
-**Human-in-the-Loop Approval (NON-NEGOTIABLE):**
-- System MUST present all LLM-suggested transformations for human approval before execution.
-- System MUST interact with users in natural language via Claude.ai's conversational interface.
-- System MUST present the next best alternative when a suggestion is rejected.
+**Verification Ritual (NON-NEGOTIABLE):**
+- System MUST implement the Verification Ritual for every transformation:
+  1. **Read:** Generate LLM personas to review the initial suggested transformation and challenge assumptions. Decide on the best approach.
+  2. **Run:** Execute the approved transformation via Python tools.
+  3. **Test:** Have an LLM Data Analyst persona review transformations and compare before/after.
+  4. **Commit:** Accept only verified, Data Analyst LLM persona-approved output.
+- System MUST assign a confidence score to each transformation decision.
+- System MUST present the final decision to the human user in the report (MVP). In V2, users can inspect the full discussion between LLM personas.
+- On rejection by LLM personas, the system MUST present the next best alternative with justification.
 - System MUST clearly distinguish between LLM-recommended decisions and user-directed transformations.
 
-**Data Cleaning (Module A):**
+**Approval Model:**
+- The LLM presents transformation suggestions with justification.
+- LLM personas approve, reject, or ask for more detail in natural language.
+- On rejection, the LLM presents the next best alternative with justification.
+- Final report for human includes the final decision (MVP).
+- In V2, user can inspect the discussion between LLM personas for reasoning details.
+
+**Data Cleaning (Skill A):**
 - System MUST detect and assess missing values in the input dataset.
 - System MUST suggest imputation strategies to handle missing values, with justification.
 - System MUST detect duplicate and near-duplicate records.
-- System MUST handle conflicting duplicates according to approved rules or flag them for review.
+- System MUST handle conflicting duplicates according to validated rules or flag them for review.
 - System MUST detect and suggest resolution for type inconsistencies.
 - System MUST detect and suggest handling for outliers.
 - System MUST detect and suggest standardization for messy column names (special characters, duplicates).
 
-**Feature Engineering (Module B):**
+**Feature Engineering (Skill B):**
 - System MUST suggest relevant features with justification.
-- System MUST apply feature engineering and format transformations (including data type conversions such as floats and dates) only after human approval.
+- System MUST apply feature engineering and format transformations (including data type conversions such as floats and dates) only after validation through the LLM persona loop.
+
+**Skill Handoff Contract:**
+- Skill A MUST produce a standardized output format that Skill B expects.
+- If Skill B detects issues with Skill A's output, Skill B MUST stop and flag the issue for human review.
+
+**Mistake Logging:**
+- Each skill MUST maintain its own mistake log.
+- The PM aggregates logs into a summary report and uses recurring patterns to trigger Constitution updates.
 
 **Documentation & Auditability:**
-- System MUST generate documentation following the mandatory justification template for every transformation:
+- System MUST generate documentation following the mandatory 3-part justification template for every transformation (MVP):
   1. What was done?
   2. Why?
-  3. What alternatives were considered (and why were they rejected)?
-  4. What is the impact?
+  3. What is the impact?
+- In V2, the template expands to 4 parts, adding: What alternatives were considered (and why were they rejected)?
 - System MUST produce a summary of applied preprocessing changes with before/after comparison context.
 - System MUST log all transformations applied to the dataset in a structured format.
 - System MUST generate a plain-language data quality report explaining issues found, actions taken, and rationale, including:
@@ -150,12 +146,13 @@ The pipeline must handle the following edge cases robustly (V1 requirement):
 - System MUST assign a unique version or run ID to each pipeline execution.
 - System MUST allow users to reproduce previous outputs using the same inputs and configuration.
 - System MUST flag transformations that may significantly alter business-critical metrics.
+- System MUST include a confidence score for each transformation decision.
 
 **Plain-Language Compliance:**
 - All documentation MUST be written in plain language understandable to non-developer stakeholders.
 - Basic statistical terms (mean, median, mode, outlier) are permitted without explanation.
 - Method-specific terms (z-score, IQR, one-hot encoding) MUST be explained on first use.
-- All acronyms MUST be defined on first use.
+- All acronyms MUST be defined on first use. No company-specific terminology without explanation.
 - System MUST run an automated jargon scan to flag undefined acronyms and unexplained terminology.
 - Every metric MUST include comparison context (before/after); new features MUST include benchmark comparisons.
 
@@ -175,15 +172,16 @@ The pipeline must handle the following edge cases robustly (V1 requirement):
 - **Platform (MVP):** Claude.ai with built-in Python tools. Users upload CSVs and interact with the LLM in natural language.
 - **Platform (V2):** Claude Code with Claude Agent Skills, auto-discovered from `.claude/skills/` directory.
 - **LLM:** Claude 4.5 Sonnet (Anthropic) — core runtime component in both MVP and V2.
+- **LLM Configuration Intent:** Low temperature / high consistency for maximum reproducibility (to be enforced in V2 where temperature control is available).
 - **Language:** Python (version as provided by Claude.ai's Python tools environment)
 - **Dependency Philosophy:** Vanilla Python first. Libraries introduced only for tasks that are error-prone or impractical to implement from scratch.
-- **MVP Dependencies (pre-installed in Claude.ai):** pandas, numpy, vanilla Python standard library
+- **MVP Dependencies (pre-installed in Claude.ai):** pandas, numpy, scikit-learn, vanilla Python standard library
 - **V2 Dependencies (Claude Code — can pip install):** All MVP dependencies, plus: pandera, hypothesis, pytest
-- **Provisional (V2):** scikit-learn (to be confirmed for Module B)
 - **Post-MVP (V2):** great_expectations
+- **Prohibited:** No frameworks or libraries outside the approved list without PM + Skill Owner approval and a compatibility test.
 - **Dependency Management (MVP):** Limited to pre-installed libraries in Claude.ai. No pip install capability.
-- **Dependency Management (V2):** Version ranges in `requirements.txt`. New library adoption requires PM + relevant Module Owner approval and compatibility testing.
-- **Testing (MVP):** Manual verification — user reviews before/after comparisons generated by the LLM.
+- **Dependency Management (V2):** Version ranges in `requirements.txt`. New library adoption requires PM + relevant Skill Owner approval and compatibility testing.
+- **Testing (MVP):** LLM Data Analyst persona reviews transformations and compares before/after. Manual verification by user via the transformation report.
 - **Testing (V2):** Automated — pytest + pandera (schema validation) + hypothesis (property-based testing). Hybrid approach: pre-defined templates for common cases, dynamically generated for edge cases.
 - **Data Format (MVP):** Single tabular CSV file only. XLSX, database tables, and multi-file joins are out of scope.
 - **Output Format:** CSV (cleaned/engineered data) + Markdown (transformation reports)
@@ -191,6 +189,7 @@ The pipeline must handle the following edge cases robustly (V1 requirement):
   - MVP: Data is uploaded to Claude.ai and processed through Anthropic's API. This is accepted for non-sensitive, open-source data only. The security guardrail is relaxed for the MVP.
   - V2: Data processed through Anthropic's API via Claude Code. PII must be anonymized locally before any LLM interaction.
   - Never hardcode secrets. V2: Store in local `.env`, include in `.gitignore`.
+  - If a secret is accidentally committed, it must be rotated immediately. Removal from the repository alone is not sufficient.
   - Logs must never contain raw data values. All identifiers must be masked or hashed in exported logs.
   - System MUST ensure auditability of all transformations applied to the data.
 - **PII Handling (V1):** Basic warning only (e.g., "Column X may contain PII — proceed with caution"). Hybrid detection: LLM flags potential PII during analysis, human confirms. MVP uses open-source, non-sensitive datasets only.
@@ -199,23 +198,23 @@ The pipeline must handle the following edge cases robustly (V1 requirement):
 ### MVP Workflow
 
 1. User uploads a raw CSV to Claude.ai
-2. Claude 4.5 Sonnet reads the full dataset via Python tools
-3. Claude analyzes the data, identifies issues, and suggests transformations with justification
-4. User approves or rejects each suggestion in natural language
+2. Claude 4.5 Sonnet reads/analyzes the full dataset via Python tools
+3. Claude summarizes the issues and suggests transformations with justification
+4. LLM personas analyze the suggestions and challenge assumptions
 5. On rejection, Claude presents the next best alternative with justification
 6. Claude executes approved transformations via Python tools
-7. Claude generates a transformation report (markdown) following the 4-part justification template
+7. Claude generates a transformation report (markdown) following the 3-part justification template
 8. User downloads the cleaned/engineered CSV and the transformation report
 
 ### V2 Migration Path
 
 To minimize rework when transitioning from MVP (Claude.ai) to V2 (Claude Code):
 
-1. **Module boundaries = Skill boundaries:** Module A and Module B are designed with the same input/output contracts that future Agent Skills will use.
-2. **Standardized handoff format:** The intermediate format between Module A and Module B is identical to the future Skill A → Skill B handoff contract.
+1. **Skill boundaries = Module boundaries:** Skill A and Skill B are designed with the same input/output contracts that future Agent Skills will use.
+2. **Standardized handoff format:** The intermediate format between Skill A and Skill B is identical to the future Skill A → Skill B handoff contract.
 3. **Report templates:** The same markdown justification template is used in MVP reports and future Claude Code inline reports.
 4. **Test suite portability:** Manual verification steps in MVP are documented so they can be converted to automated tests (Pandera, Hypothesis) in V2.
-5. **SKILL.md preparation:** Each module's purpose, inputs, outputs, and constraints are documented in a format that can be directly converted to `SKILL.md` files for Claude Code.
+5. **SKILL.md preparation:** Each skill's purpose, inputs, outputs, and constraints are documented in a format that can be directly converted to `SKILL.md` files for Claude Code.
 
 ## 5. Success Criteria
 
@@ -228,13 +227,14 @@ To minimize rework when transitioning from MVP (Claude.ai) to V2 (Claude Code):
   - Outputs include cleaned data, engineered features, and transformation report (markdown)
   - All edge cases handled (empty CSV, single-row, all-missing column, mixed types, special characters, duplicate column names)
 
-- [ ] **Human-in-the-Loop:**
-  - Every LLM-suggested transformation is presented for approval before execution
-  - Rejected suggestions trigger next best alternative
-  - No transformation executes without explicit human approval
+- [ ] **Verification Ritual:**
+  - Every LLM-suggested transformation goes through the internal persona validation loop
+  - Each transformation decision includes a confidence score
+  - Rejected suggestions (by LLM personas) trigger next best alternative
+  - Final report presents validated decisions to the human user
 
 - [ ] **Documentation Quality:**
-  - Every transformation report follows the mandatory 4-part justification template
+  - Every transformation report follows the mandatory 3-part justification template (MVP) / 4-part template (V2)
   - All reports pass the automated jargon scan
   - Every metric includes comparison context
   - A new team member can understand all reports without asking questions (stranger test)
@@ -287,7 +287,7 @@ The system is responsible for data preprocessing and transformation transparency
   - Critical columns are missing that impact key metrics or joins
   - Data integrity cannot be guaranteed (e.g., severe type inconsistencies that cannot be resolved)
 
-- System MUST warn, suggest resolution, and await human approval when:
+- System MUST warn, suggest resolution, and validate through the persona loop when:
   - All values are missing in a column
   - Mixed types exist in a single column
   - Special characters or duplicate column names are detected
@@ -297,22 +297,22 @@ The system is responsible for data preprocessing and transformation transparency
 - Details:
   - **Empty input:** Fail with a clear error message indicating no data was provided
   - **Single-row CSV:** Process with appropriate warnings about statistical limitations
-  - **Malformed data:** Warn the user, suggest resolution, await approval before proceeding
-  - **Missing fields:** Warn the user, highlight missing columns and potential impact, await approval
-  - **Duplicates:** Warn the user, suggest resolution or flag conflicts, await approval
-  - **All-missing column:** Suggest drop or imputation strategy with justification, await approval
+  - **Malformed data:** Warn the user, suggest resolution, validate through persona loop before proceeding
+  - **Missing fields:** Warn the user, highlight missing columns and potential impact, validate approach through persona loop
+  - **Duplicates:** Warn the user, suggest resolution or flag conflicts, validate through persona loop
+  - **All-missing column:** Suggest drop or imputation strategy with justification, validate through persona loop
 
 ## 7. Project Gates
 
 | Gate | Milestone |
 |------|-----------|
 | G1 | Constitution ratified |
-| G2 | Module A spec complete |
-| G3 | Module B spec complete |
-| G4 | Modules implemented and tested |
+| G2 | Skill A spec complete |
+| G3 | Skill B spec complete |
+| G4 | Skills implemented and tested |
 | G5 | 3 CSVs processed successfully |
 | G6 (V2) | Claude Code Agent Skills integration |
 
 ---
 
-**Governed by:** [constitution.md](./constitution.md) v1.0.0
+**Governed by:** [constitution.md](./constitution.md) v1.1.0
