@@ -129,3 +129,22 @@ The system is responsible for data preprocessing and transformation transparency
 - **Duplicates:** Warn the user and continue processing, resolving or flagging conflicts based on defined rules
 - **Timeout:** Fail with a clear error message indicating processing time exceeded
 
+
+----
+
+Decision-ready:
+
+The consitution should define “gates” that the final output must pass:
+• Schema validation (column presence, types)
+• Null thresholds per field (e.g., no more than X% missing for required fields)
+• Range checks (e.g., fare_amount >= 0)
+• Referential integrity checks (if applicable)
+• Drift checks between baseline vs transformed distributions
+
+The users can decide what decision-ready means in terms of the features
+
+AI suggests the features and user approves, always being able to refer to the documentation to support the decision. Feature engineering is in scope for MVP
+
+Every single decision should be documented with justification, and there should be both log files and human-readable report
+
+Secondary users can interact with the pipeline 

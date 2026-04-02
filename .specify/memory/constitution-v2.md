@@ -1,7 +1,5 @@
 # AI-Assisted Data Prep Pipeline Constitution
 
-**Version**: v1.0.1 | **Ratified**: 2026-03-24 | **Last Amended**: 2026-03-30
-
 ---
 
 ## Core Principles
@@ -10,30 +8,30 @@
 
 This project transforms raw, messy CSV files into clean, decision-ready datasets through an LLM-powered two-module pipeline. The pipeline uses Claude 4.5 Sonnet as its core runtime engine to analyze data, judge the best transformation approaches, interact with users in plain language, and generate documentation.
 
-The pipeline serves two primary user groups: non-technical business users (Level B) who interact with Module A (Data Cleaning), and data scientists who interact with Module B (Feature Engineering).
+The pipeline serves two primary user groups: non-technical business users (Level B) who interact with Skill A (Data Cleaning), and data scientists who interact with Skill B (Feature Engineering).
 
 - **Problem:** Raw CSV data requires significant manual effort to clean, validate, and prepare for analysis or modeling.
-- **Primary users:** Non-technical business stakeholders (Module A) and data scientists (Module B).
-- **Outcome that matters most:** Trustworthy, well-documented, decision-ready data — with zero tolerance for hallucinated or fabricated transformations.
+- **Primary users:** Non-technical business stakeholders (Skill A) and data scientists (Skill B).
+- **Outcome that matters most:** Trustworthy, well-documented, decision-ready data.
 - **MVP scope:** Tabular CSV data only. Single file in, single output out. Consumer credit banking data is deferred to post-MVP.
-- **MVP platform:** Claude.ai with built-in Python tools. Users upload CSVs, interact with the LLM in natural language, and receive cleaned data plus documentation.
+- **MVP platform:** Claude.ai with built-in Python tools. Users upload CSVs and receive cleaned data plus documentation.
 - **V2 platform:** Claude Code with Claude Agent Skills, adding richer interaction, local Python environment, and advanced testing capabilities.
-- **LLM:** Claude 4.5 Sonnet (Anthropic). The LLM is a core runtime component — it analyzes data, makes transformation recommendations, interacts with users, and generates documentation.
+- **LLM:** Claude 4.5 Sonnet (Anthropic). The LLM is a core runtime component — it analyzes data, makes transformation recommendations, and generates documentation.
 
 ### II. AI as Overconfident Intern
 
-The LLM (Claude 4.5 Sonnet) is treated as a capable but unreliable assistant. It may suggest plausible-sounding but incorrect transformation strategies. All LLM-generated suggestions must be reviewed and approved by a human before execution. Humans remain responsible for all final decisions.
+The LLM (Claude 4.5 Sonnet) is treated as a capable but unreliable assistant. It may suggest plausible-sounding but incorrect transformation strategies. All LLM-generated suggestions must have an internal validation loop with different personas challenging the initial LLM decision, to achieve a final robust decision. The report produced by the LLM will include a 'confidence score' in the decision.  
 
 **Verification Ritual:**
-  1. **Read:** Review the LLM's suggested transformation and its plain-language justification.
+  1. **Read:** Generate LLM personas to review the initisl suggested transformation and challenge the assumptions. Decide on the best approach.
   2. **Run:** Execute the approved transformation via Python tools.
-  3. **Test:** Verify the output (MVP: manual review of before/after comparisons; V2: automated tests with Pandera and Hypothesis).
-  4. **Commit:** Accept only verified, human-approved output.
+  3. **Test:** Verify the output (MVP: have an LLM Data Analyst persona to review transformations and compare before/after).
+  4. **Commit:** Accept only verified, Data Analyst LLM persona output.
 
 **Applies to both MVP and V2:**
-- **Module Handoff Contract:** Module A produces a standardized output format that Module B expects. If Module B detects issues with Module A's output, Module B stops and flags the issue for human review.
-- **Mistake Logging:** Each module maintains its own mistake log. The PM aggregates logs into a summary report and uses recurring patterns to trigger Constitution updates.
-- **Approval Model:** The LLM presents transformation suggestions with justification in natural language. Users approve, reject, or ask for more detail in natural language. On rejection, the LLM presents the next best alternative with justification.
+- **Skill Handoff Contract:** Skill A produces a standardized output format that Skill B expects. If Skill B detects issues with Skill A's output, Skill B stops and flags the issue for human review.
+- **Mistake Logging:** Each skill maintains its own mistake log. The PM aggregates logs into a summary report and uses recurring patterns to trigger Constitution updates.
+- **Approval Model:** The LLM presents transformation suggestions with justification. LLM personas approve, reject, or ask for more detail in natural language. On rejection, the LLM presents the next best alternative with justification. Final report for human includes final decision in MVP. In V2, user can inspect the discussion between LLM personas to get details on the reasoning. 
 - **LLM Data Access:** The LLM has access to the full dataset via Python tools. It analyzes the complete data to make informed recommendations.
 
 ### III. Plain-Language Commitment
@@ -46,8 +44,8 @@ All specs, plans, documentation, and transformation reports must be understandab
 - **Mandatory Justification Template** — every transformation report must include:
   1. What was done?
   2. Why?
-  3. What alternatives were considered (and why were they rejected)?
-  4. What is the impact?
+  3. What is the impact?
+  4. (V2 - What alternatives were considered (and why were they rejected)?)
 - **Plain-Language Tests:**
   - Every metric must be given context (e.g., percentage of rows affected, column name, before/after comparison).
   - New features must include benchmark comparisons.
@@ -61,8 +59,7 @@ Guardrails are first-class citizens in this project. Decisions about security, d
 
 - **Non-Negotiable Guardrails** (cannot be overridden without a Major version change):
   - Security and PII rules
-  - Zero hallucination tolerance — all LLM suggestions require human approval before execution
-  - Human-in-the-loop approval for all transformations
+  - Validation loop with personas to prevent hallucination
 - **Discussable Guardrails** (can be relaxed with full team consensus):
   - All other rules and constraints
 - When a feature request or stakeholder demand conflicts with the Constitution, the team must reference the specific section and explain why the guardrail takes precedence.
@@ -103,7 +100,7 @@ This Constitution is a living document. It is versioned and updated as the team 
 ### LLM Configuration
 
 - **Model:** Claude 4.5 Sonnet (Anthropic)
-- **Role:** Core runtime component — analyzes data, recommends transformations, interacts with users, generates documentation
+- **Role:** Core runtime component — analyzes data, recommends transformations, generates documentation
 - **Data Access:** Full dataset (uploaded by user to Claude.ai)
 - **Intent:** Low temperature / high consistency for maximum reproducibility (to be enforced in V2 where temperature control is available)
 
@@ -114,14 +111,13 @@ This Constitution is a living document. It is versioned and updated as the team 
 - **MVP dependencies (pre-installed in Claude.ai):**
   - `pandas` — dataframe manipulation
   - `numpy` — numerical operations
-  - Vanilla Python standard library
+  - `scikit-learn` - encoding, normalization, feature generation
 - **V2 dependencies (Claude Code — can pip install):**
   - All MVP dependencies, plus:
   - `pandera` — schema validation
   - `hypothesis` — property-based testing
   - `pytest` — test runner
-- **Provisional:** `scikit-learn` — to be determined based on Module B requirements (V2)
-- **Post-MVP:** `great_expectations` — advanced data validation (V2)
+  - `great_expectations` — advanced data validation (V2)
 - **Prohibited:** No frameworks or libraries outside the approved list without PM + Module Owner approval and a compatibility test.
 
 ### Dependency Management
@@ -131,18 +127,18 @@ This Constitution is a living document. It is versioned and updated as the team 
 
 ### User Interaction
 
-- **MVP (Claude.ai):** Users interact with the LLM in natural language. The LLM presents transformation suggestions with justification. Users approve, reject, or ask for clarification — all in natural language conversation.
+- **MVP (Claude.ai):** Users interact with the LLM in natural language. The LLM presents transformation suggestions with justification. 
 - **V2 (Claude Code):** Users interact with skills directly in Claude Code. Standardized APPROVE / REJECT / EXPLAIN MORE interaction pattern. On rejection, the skill presents the next best alternative automatically.
 
 ### MVP Workflow
 
 1. User uploads a raw CSV to Claude.ai
-2. Claude 4.5 Sonnet reads the full dataset via Python tools
-3. Claude analyzes the data, identifies issues, and suggests transformations with justification
-4. User approves or rejects each suggestion in natural language
+2. Claude 4.5 Sonnet reads/analyzes the full dataset via Python tools
+3. Claude summarizes the issues and suggests transformations with justification
+4. LLM personas analyze the suggestions and challenge assumptions
 5. On rejection, Claude presents the next best alternative with justification
 6. Claude executes approved transformations via Python tools
-7. Claude generates a transformation report (markdown) following the 4-part justification template
+7. Claude generates a transformation report (markdown) following the 3-part justification template
 8. User downloads the cleaned/engineered CSV and the transformation report
 
 ### Output Format
@@ -209,7 +205,6 @@ The following features are intentionally **not** being built in V1:
 - Cloud deployment — data processed via Anthropic's API only
 - `pandera`, `hypothesis`, `pytest` — not available in Claude.ai; deferred to V2
 - `great_expectations` — deferred to V2
-- `scikit-learn` — provisional, to be determined for Module B (V2)
 - XLSX or database table ingestion — deferred to V2
 
 ### V1 Definition of Done
@@ -238,10 +233,10 @@ V1 is a **robust tool** that handles edge cases, not a happy-path proof of conce
 | Role | Person | Responsibilities |
 |------|--------|-----------------|
 | **PM** | Margarida Sacouto | Owns Constitution and project overview spec; final approval on process and documentation changes; escalation point for unresolved disputes |
-| **Module A Owner** | Xiao Pan | Owns Module A (Data Cleaning) spec; co-approves technical changes to Module A; proposes changes based on module logs |
-| **Module B Owner** | Valerie Bien-Aime | Owns Module B (Feature Engineering) spec; co-approves technical changes to Module B; proposes changes based on module logs |
+| **Skill A Owner** | Xiao Pan | Owns Skill A (Data Cleaning) spec; co-approves technical changes to Skill A; proposes changes based on skill logs |
+| **Skill B Owner** | Valerie Bien-Aime | Owns skill B (Feature Engineering) spec; co-approves technical changes to Skill B; proposes changes based on skill logs |
 
-Users may submit change requests. PM and Module Owners decide on adoption.
+Users may submit change requests. PM and Skill Owners decide on adoption.
 
 ### Change Process
 
@@ -250,7 +245,7 @@ Users may submit change requests. PM and Module Owners decide on adoption.
 - **Silence Rule:** If no team member objects within 48 hours, the change is approved.
 - **Approval Authority:**
   - Process and documentation changes: PM approves.
-  - Technical changes: PM + relevant Module Owner co-approve.
+  - Technical changes: PM + relevant Skill Owner co-approve.
 
 ### Versioning
 
@@ -274,15 +269,15 @@ Changes to this Constitution follow semantic versioning:
 | Gate | Milestone |
 |------|-----------|
 | G1 | Constitution ratified |
-| G2 | Module A spec complete |
-| G3 | Module B spec complete |
-| G4 | Modules implemented and tested |
+| G2 | Skill A spec complete |
+| G3 | Skill B spec complete |
+| G4 | Skills implemented and tested |
 | G5 | 3 CSVs processed successfully |
 | G6 (V2) | Claude Code Agent Skills integration |
 
 ### Enforcement
 
-- All specs (`spec.md`), plans (`plan.md`), tasks, and modules must comply with this Constitution.
+- All specs (`spec.md`), plans (`plan.md`), tasks, and skills must comply with this Constitution.
 - **Violation Resolution:**
   1. **Step 1:** Raise directly with the team member (peer-to-peer).
   2. **Step 2:** If unresolved, escalate to PM (Margarida) for final decision.
@@ -296,4 +291,4 @@ Changes to this Constitution follow semantic versioning:
 
 ---
 
-**Version**: v1.0.0 | **Ratified**: 2026-03-30 | **Last Amended**: 2026-03-30
+**Version**: v1.1.0 | **Ratified**: 2026-03-26 | **Last Amended**: 2026-04-02
