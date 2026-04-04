@@ -112,6 +112,7 @@ This Constitution is a living document. It is versioned and updated as the team 
   - `pandas` — dataframe manipulation
   - `numpy` — numerical operations
   - `scikit-learn` - encoding, normalization, feature generation
+  - `ydata-profiling` - producing the HTML data report
 - **V2 dependencies (Claude Code — can pip install):**
   - All MVP dependencies, plus:
   - `pandera` — schema validation

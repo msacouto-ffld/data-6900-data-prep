@@ -23,9 +23,26 @@ This feature delivers the Skill A data profiling and validation plan for the use
 
 ## Constitution Check
 
+## Constitution Check
+
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+| # | Constitution Rule | Section Reference | Status | Notes |
+|---|---|---|---|---|
+| 1 | MVP platform is Claude.ai with built-in Python tools | Core Principles §I | ✅ Pass | Plan targets Claude.ai with Python tooling. |
+| 2 | LLM is Claude 4.5 Sonnet | Tech Stack — LLM Configuration | ✅ Pass | Plan specifies Claude 4.5 Sonnet. |
+| 3 | MVP dependencies limited to approved list | Tech Stack — Approved Languages & Frameworks | ✅ Pass | All dependencies on approved list (pending constitution v1.1.1 adding `ydata-profiling`). |
+| 4 | No Phase 2 dependencies in MVP | Tech Stack — Dependency Management; Out of Scope | ✅ Pass | `pandera`, `hypothesis`, `pytest`, `great_expectations` explicitly deferred. |
+| 5 | Single CSV in, single output out | Core Principles §I | ✅ Pass | Single-file ingestion scoped. |
+| 6 | PII detection present at profiling stage | Security §PII; Guardrails §IV | ✅ Pass | FR-008 requires PII detection with warnings. **Carry-forward:** Phase 1 design must ensure the natural language report never reproduces actual PII values — only column names and statistical patterns. |
+| 7 | Logs never contain raw data values | Security §PII — Logging | ✅ Pass | FR-016 enforces this. |
+| 8 | Verification Ritual applies to LLM outputs | Core Principles §II | ⚠️ Design Decision (Phase 1) | The LLM natural language report is an LLM output subject to hallucination risk. **Carry-forward to Phase 1:** Define a cross-validation step where the LLM verifies its narrative claims against quantitative ydata-profiling statistics. Does not block Phase 0. |
+| 9 | Plain-Language Commitment | Core Principles §III | ✅ Pass | FR-007, SC-005, SC-006 enforce and measure this. |
+| 10 | Edge cases handled | Out of Scope — V1 Definition of Done | ✅ Pass | All required edge cases covered in User Story 3 and Edge Cases section. |
+| 11 | No prohibited dependencies or external services | Tech Stack; Security | ✅ Pass | No unapproved libraries or external APIs. |
+| 12 | Output format compliance | Tech Stack — Output Format | ✅ Pass | Markdown natural language report satisfies constitution requirement. HTML report is a tool-native artifact from ydata-profiling, not a replacement. |
+
+**Gate Result: PASS.** Two carry-forward items for Phase 1 design (items #6 and #8). No blockers for Phase 0 research.
 
 ## Project Structure
 
