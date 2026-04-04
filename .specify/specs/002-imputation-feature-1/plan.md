@@ -7,25 +7,19 @@
 
 ## Summary
 
-[Extract from feature spec: primary requirement + technical approach from research]
+This feature delivers the Skill A data profiling and validation plan for the user-uploaded CSV workflow. The primary requirement is to ingest a raw tabular file, generate an HTML profiling report with `ydata-profiling`, and produce an LLM-generated natural language summary that identifies data quality issues, PII risks, and edge cases before any cleaning begins. The implementation is Python-based, uses Claude 4.5 Sonnet as the LLM runtime, and focuses on local CSV/Excel-style analysis, deferring Phase 2 dependencies such as `pandera` and `hypothesis` until the next iteration.
 
 ## Technical Context
 
-<!--
-  ACTION REQUIRED: Replace the content in this section with the technical details
-  for the project. The structure here is presented in advisory capacity to guide
-  the iteration process.
--->
-
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
-**Project Type**: [e.g., library/cli/web-service/mobile-app/compiler/desktop-app or NEEDS CLARIFICATION]  
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+**Language/Version**: Python 3.11+; built around the local Python runtime available to Claude.ai / Claude Code and standard desktop Python environments.  
+**Primary Dependencies**: `pandas`, `numpy`, `ydata-profiling`, `scikit-learn`; Anthropic `Claude 4.5 Sonnet` as the LLM orchestration layer; standard library modules for file I/O and logging.  
+**Storage**: Local files only — CSV input/output, HTML profiling artifacts, markdown reports. No database or external persistence in this phase.  
+**Testing**: Manual acceptance testing with representative CSV inputs, edge cases, and profiling verification; Phase 2 will add structured unit/integration tests (`pytest`) and schema validation.  
+**Target Platform**: Local desktop / research environment with Python installed, using Claude.ai or Claude Code integration for LLM-driven data analysis.  
+**Project Type**: Data preprocessing pipeline / local CLI-style workflow for exploratory data profiling and cleaning preparation.  
+**Performance Goals**: Support interactive profiling of single CSV files typical for business users; keep run time acceptable for human-in-the-loop analysis (< a few minutes per dataset within LLM session limits).  
+**Constraints**: Must avoid additional Phase 2 dependencies such as `pandera` and `hypothesis` in this phase; must handle malformed CSV inputs gracefully; must never persist raw data values in logs; must operate within Claude.ai session and tool limits.  
+**Scale/Scope**: Single-file CSV ingestion, single cleaned output, and report generation. Focus is on data quality profiling and validation for non-technical stakeholders, not large-scale ETL or multi-file joins.
 
 ## Constitution Check
 

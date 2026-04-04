@@ -7,15 +7,11 @@
 
 ## Summary
 
-[Extract from feature spec: primary requirement + technical approach from research]
+This feature delivers the Skill A Data Cleaning plan for the raw CSV/Excel analysis pipeline. The primary requirement is to ingest a user-uploaded CSV file, generate a robust data profiling report, detect data quality issues and PII, and prepare the dataset for downstream cleaning and transformation decisions. The implementation uses Python with Claude 4.5 Sonnet as the LLM runtime to drive the analysis and decision-making, while keeping the current phase focused on local CSV files and avoiding additional Phase 2 dependencies such as `pandera` and `hypothesis`.
+
+The technical approach is to build a two-stage Phase 1 pipeline: first profile the input data with `ydata-profiling` and produce an LLM-generated natural language report for non-technical stakeholders; second, use the report as the input for the data cleaning decision flow. This satisfies the PM preference to prioritize a ready-to-analyze Excel-style workflow and reserves advanced schema validation and property-based testing for later phases.
 
 ## Technical Context
-
-<!--
-  ACTION REQUIRED: Replace the content in this section with the technical details
-  for the project. The structure here is presented in advisory capacity to guide
-  the iteration process.
--->
 
 **Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
 **Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
