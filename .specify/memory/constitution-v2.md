@@ -123,7 +123,7 @@ This Constitution is a living document. It is versioned and updated as the team 
 
 ### Dependency Management
 
-- MVP: Limited to pre-installed libraries in Claude.ai. No pip install capability.
+- MVP: Limited to libraries in Claude.ai. 
 - V2: Version ranges specified in `requirements.txt`. New library adoption requires PM + relevant Module Owner approval → compatibility test before integration.
 
 ### User Interaction
