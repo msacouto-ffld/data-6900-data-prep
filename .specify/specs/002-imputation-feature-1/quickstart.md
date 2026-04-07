@@ -248,7 +248,6 @@ or download these files to share with your team.
 - **Proceed to data cleaning**: Ask "Clean this dataset based on the profiling results" to begin Feature 2
 - **Download and share**: Use the download links above to save the reports
 - **Profile another file**: Upload a new CSV and ask for profiling
-- **Ask questions**: Ask follow-up questions about the results — e.g., "Tell me more about the mixed types in zip_code"
 
 ## Error Reference
 
