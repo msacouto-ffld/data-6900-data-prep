@@ -44,7 +44,7 @@ A simple two-column slide or whiteboard comparison: "Prompt-based instruction (p
 **Presenter B**
 
 ### Objective
-Learners see how hooks are configured on the major platforms and watch a working hook built from scratch.
+Learners see how hooks are configured on the major platforms and watch a real hook built for an analytics data-cleaning skill.
 
 ### Talking Points (10:00–13:00) — Platform Landscape (3 min)
 
@@ -58,31 +58,67 @@ Quickly contrast the four platforms. Don't read the table — just highlight wha
 | **Cursor** | Hooks integrated with Rules & Skills. Supports "grind loop" — agent iterates until all tests pass. |
 | **Kiro (AWS)** | Event-based (file save/create), not tool-based. Tied to spec-driven 3-phase workflow. |
 
-### Live Demo (13:00–19:00) — Build an Auto-Format Hook in Claude Code (6 min)
+### Live Demo (13:00–19:00) — Build a CSV Validation Gate for a Data Profiling Skill (6 min)
+
+**Context for the audience (30 seconds):** "We're building a data-cleaning skill where a user uploads a raw CSV, the system profiles it with ydata-profiling, and the LLM writes a natural language report. The spec says the system *must* reject empty CSVs, catch duplicate column names, and flag special characters — every single time. That's a perfect hook use case: it must happen every time, it's pattern-matching, and failure should block the pipeline before the LLM ever sees the data."
 
 Walk through the four steps live in a terminal:
 
-**Step 1 — Create the hook script** at `.claude/hooks/auto-format.sh`:
+**Step 1 — Create the hook script** at `.claude/hooks/validate-csv.sh`:
 
 ```bash
 #!/bin/bash
+# PreToolUse hook: validate CSV before the profiling pipeline runs
 INPUT=$(cat)
 FILE=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty')
+
+# Skip if no file path provided
 if [ -z "$FILE" ] || [ ! -f "$FILE" ]; then
   exit 0
 fi
+
+# Only validate CSV files
 EXT="${FILE##*.}"
-case "$EXT" in
-  py) black --quiet "$FILE" 2>/dev/null ;;
-  js|jsx|ts|tsx) npx prettier --write "$FILE" 2>/dev/null ;;
-esac
-exit 0
+if [ "$EXT" != "csv" ]; then
+  exit 0
+fi
+
+# Run validation checks via Python
+python3 -c "
+import pandas as pd, sys, json
+
+errors = []
+try:
+    df = pd.read_csv('$FILE')
+except Exception as e:
+    print(json.dumps({'error': f'Not a valid CSV: {e}'}))
+    sys.exit(2)  # EXIT 2 = BLOCK the operation
+
+# FR-003: Reject empty CSVs (headers only, no rows)
+if len(df) == 0:
+    errors.append('Empty CSV — headers only, no data rows.')
+
+# FR-009: Detect duplicate column names
+dupes = [c for c in df.columns if list(df.columns).count(c) > 1]
+if dupes:
+    errors.append(f'Duplicate column names: {set(dupes)}')
+
+# FR-010: Detect special characters in column names
+import re
+bad_cols = [c for c in df.columns if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', str(c))]
+if bad_cols:
+    errors.append(f'Non-standard column names: {bad_cols}')
+
+if errors:
+    print(json.dumps({'errors': errors}))
+    sys.exit(2)  # BLOCK — do not proceed to profiling
+"
 ```
 
 **Step 2 — Make it executable:**
 
 ```bash
-chmod +x .claude/hooks/auto-format.sh
+chmod +x .claude/hooks/validate-csv.sh
 ```
 
 **Step 3 — Register it** in `.claude/settings.json`:
@@ -90,26 +126,37 @@ chmod +x .claude/hooks/auto-format.sh
 ```json
 {
   "hooks": {
-    "PostToolUse": [{
-      "matcher": "Write|Edit",
-      "hooks": [{ "type": "command", "command": ".claude/hooks/auto-format.sh" }]
+    "PreToolUse": [{
+      "matcher": "Write|Execute",
+      "hooks": [{ "type": "command", "command": ".claude/hooks/validate-csv.sh" }]
     }]
   }
 }
 ```
 
-**Step 4 — Test it:**
+**Step 4 — Test it with a bad CSV:**
 
 ```bash
-echo '{"tool_input":{"file_path":"test.py"}}' | .claude/hooks/auto-format.sh
-echo $?  # Should print 0
+# Create a CSV with duplicate columns and special characters
+echo 'Name,Name,Email Address,score!' > bad_data.csv
+echo 'Alice,A,alice@test.com,95' >> bad_data.csv
+
+echo '{"tool_input":{"file_path":"bad_data.csv"}}' | .claude/hooks/validate-csv.sh
+echo $?  # Should print 2 (BLOCKED)
+
+# Now test with a clean CSV
+echo 'name,email,score' > clean_data.csv
+echo 'Alice,alice@test.com,95' >> clean_data.csv
+
+echo '{"tool_input":{"file_path":"clean_data.csv"}}' | .claude/hooks/validate-csv.sh
+echo $?  # Should print 0 (ALLOWED)
 ```
 
-**Demo tip:** Have a messy Python file ready. Show the agent editing it, then show the file after — formatted automatically by Black. The before/after is the "aha" moment.
+**Demo tip:** The payoff is the exit code. Show `$? = 2` for the bad CSV and `$? = 0` for the clean one. Then connect it back to Presenter A's point: "We didn't ask the LLM to check for duplicate columns. We didn't put it in a system prompt and hope. The hook *guarantees* this CSV never reaches ydata-profiling unless it passes validation. That's the difference between probabilistic and deterministic."
 
-### Talking Points (19:00–20:00) — Quick Mention of the Security Gate Pattern (1 min)
+### Talking Points (19:00–20:00) — What Stays Outside the Hook (1 min)
 
-Briefly show the Python SDK version of a PreToolUse hook that blocks writes to `/etc`, `/prod`, or `.env`. Don't code it live — just display it and explain: "This is the same concept but programmatic. It returns a deny decision with a reason, and the agent is blocked before it ever touches the file."
+Use the same skill to show the boundary: "Our spec also requires PII detection — scanning columns for names, emails, SSNs. That's *not* a hook. PII detection requires the LLM to reason about the content and context of column values, not just pattern-match file structure. That belongs in a skill or prompt-based rule. The decision framework is simple: if it's mechanical validation, make it a hook. If it requires judgment, keep it in the LLM." This sets up Presenter C's discussion of skills vs. hooks vs. sub-agents.
 
 ---
 
@@ -166,8 +213,9 @@ Open the floor for questions. If time is short, remind the group that hooks are 
 ## Preparation Checklist
 
 - [ ] Presenter A: Prepare a whiteboard/slide showing the 5-step lifecycle diagram
-- [ ] Presenter B: Set up a terminal with Claude Code, Black, and jq installed; have a messy `.py` file ready for the demo
-- [ ] Presenter B: Have the security gate Python snippet ready to display (not live-code)
+- [ ] Presenter B: Set up a terminal with Claude Code, jq, and Python 3 (with pandas) installed
+- [ ] Presenter B: Prepare two test CSVs — `bad_data.csv` (duplicate columns, special characters) and `clean_data.csv` (valid) — so you don't create them live
+- [ ] Presenter B: Have the PII detection example ready as a talking point (not live-code) to contrast hook vs. skill
 - [ ] Presenter C: Print or display the decision framework table for reference
 - [ ] All: Test the demo end-to-end at least once before the session
 - [ ] All: Share this lesson plan and the Hooks Report with attendees afterward
