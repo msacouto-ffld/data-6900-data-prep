@@ -1,7 +1,7 @@
 # Implementation Plan: Data Transformation with Persona Validation
 
-**Branch**: `002-data-transformation` | **Date**: 2026-04-08 | **Spec**: spec_002_02.md
-**Input**: Feature specification from spec_002_02.md (Skill A — Feature 2)
+**Branch**: `002-data-transformation` | **Date**: 2026-04-08 | **Spec**: Feature 002 - Data Transformation
+**Input**: Artifacts from Skill A Feature 1
 
 ---
 
