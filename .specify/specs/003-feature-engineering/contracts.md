@@ -10,15 +10,15 @@
 **FR(s):** FR-201, FR-202, FR-219 | **Owner:** Script | **Freedom:** Low | **Runtime:** Executed
 
 ### Purpose
-Validates the uploaded CSV against the Skill A handoff contract. Generates the run ID. Checks for optional Skill A files (profiling-data.json, transformation report). Produces the validation result dict consumed by all downstream steps. This is the first step in the pipeline.
+Validates the uploaded CSV against the Skill A handoff contract. Generates the run ID. Checks for the three-artifact handoff (CSV + transform-report.md + transform-metadata.json). Verifies provenance and contract version when metadata is present. Produces the validation result dict consumed by all downstream steps. This is the first step in the pipeline.
 
 ### Inputs
 
 | Input | Type | Source | Required |
 |-------|------|--------|----------|
-| file_path | string | Claude.ai upload path | Yes |
-| profiling_json_path | string | Claude.ai upload path | No |
-| transformation_report_path | string | Claude.ai upload path | No |
+| file_path | string | Claude.ai upload path (cleaned CSV) | Yes |
+| metadata_json_path | string | Claude.ai upload path (transform-metadata.json) | Expected (fallback if absent) |
+| transformation_report_path | string | Claude.ai upload path (transform-report.md) | Expected (fallback if absent) |
 
 ### Outputs
 
@@ -29,11 +29,12 @@ Console output:
 🔍 Validating input against Skill A handoff contract...
 ✅ File: {filename} — valid CSV
 ✅ Shape: {rows} rows × {cols} columns ({cells} cells)
-✅ Column names: no duplicates, no special characters
+✅ Provenance: produced by Skill A (contract version 1.0)
+✅ Column names: snake_case, no duplicates, no all-missing, no exact duplicate rows
 ✅ Types: consistent within each column
 ✅ Run ID: {run_id}
-ℹ️ Skill A profiling data: {found | not found}
-ℹ️ Skill A transformation report: {found | not found}
+ℹ️ Skill A transform metadata: {found | not found — fallback mode}
+ℹ️ Skill A transform report: {found | not found}
 
 All checks passed. Starting feature engineering pipeline...
 ```
@@ -48,12 +49,16 @@ All checks passed. Starting feature engineering pipeline...
 | 4 | ≥1 data row | Hard gate | "This CSV contains headers but no data rows." |
 | 5 | Cell count ≤ 500,000 | Hard gate | "This dataset exceeds the feature engineering limit ({n} cells)." |
 | 6 | Cell count 100,000–500,000 | Warning | "This dataset is large ({n} cells). Feature engineering may be slow." |
-| 7 | No duplicate column names | Hard gate | "Handoff contract violation: duplicate column names — {list}." |
-| 8 | Clean column names (regex) | Hard gate | "Handoff contract violation: special characters in column names — {list}." |
-| 9 | Consistent types per column | Hard gate | "Handoff contract violation: column '{col}' has mixed types." |
-| 10 | Missing values check | Soft gate | If missing values exist and no transformation report available: warn but proceed |
-| 11 | profiling-data.json schema | Informational | If present but malformed: warn and ignore |
-| 12 | Transformation report readable | Informational | If present but unreadable: warn and ignore |
+| 7 | Provenance (when metadata present) | Hard gate | "Handoff contract violation: this CSV was not produced by Skill A." |
+| 8 | Contract version (when metadata present) | Hard gate | "Handoff contract violation: unsupported contract version '{version}'. Skill B requires 1.0." |
+| 9 | No duplicate column names | Hard gate | "Handoff contract violation: duplicate column names — {list}." |
+| 10 | Column names snake_case + ASCII | Hard gate | "Handoff contract violation: column names not in snake_case — {list}." |
+| 11 | No all-missing columns | Hard gate | "Handoff contract violation: column(s) entirely empty — {list}." |
+| 12 | No exact duplicate rows | Hard gate | "Handoff contract violation: exact duplicate rows found ({n} rows)." |
+| 13 | Consistent types per column | Hard gate | "Handoff contract violation: column '{col}' has mixed types." |
+| 14 | Missing values check | Soft gate | If missing values exist and no metadata available: warn but proceed |
+| 15 | transform-metadata.json schema | Informational | If present but malformed: warn and fall back to CSV-only mode |
+| 16 | transform-report.md readable | Informational | If present but unreadable: warn and proceed without context |
 
 ### Error Conditions
 
@@ -74,7 +79,7 @@ All checks passed. Starting feature engineering pipeline...
 **FR(s):** Constitution PII guardrail (spec gap — added) | **Owner:** Script + LLM | **Freedom:** Medium | **Runtime:** Executed
 
 ### Purpose
-Checks for PII before feature engineering begins. If profiling-data.json is available, reads PII flags from it. If not, runs a lightweight column-name heuristic scan. Produces PII flags consumed by the dataset summary and all LLM calls.
+Checks for PII before feature engineering begins. If transform-metadata.json is available, reads PII flags from its `pii_warnings` field (carried forward by Skill A from Feature 1). If not, runs a lightweight column-name heuristic scan. Produces PII flags consumed by the dataset summary and all LLM calls.
 
 ### Inputs
 
@@ -87,9 +92,9 @@ Checks for PII before feature engineering begins. If profiling-data.json is avai
 
 On success: Populates `validation_result["pii_flags"]` (already defined in DM-003).
 
-Console output (from Skill A JSON):
+Console output (from Skill A metadata):
 ```
-🔒 PII scan: loaded {n} flags from Skill A profiling data
+🔒 PII scan: loaded {n} flags from Skill A transform metadata
 ⚠️ Column '{col}' — {PII_type} PII ({category})
 ...
 The LLM will note these columns when proposing features.
@@ -112,8 +117,8 @@ Console output (no PII):
 
 ### Logic
 
-1. Check if `validation_result["has_profiling_json"]` is True
-2. If yes: read `pii_scan` array from profiling-data.json, populate `pii_flags`
+1. Check if `validation_result["has_metadata_json"]` is True
+2. If yes: read `pii_warnings` array from transform-metadata.json, populate `pii_flags`
 3. If no: run heuristic column-name scan using word-boundary matching against token list (defined in RQ-002)
 4. Log all PII warnings to mistake log
 
@@ -121,7 +126,7 @@ Console output (no PII):
 
 | Condition | Message |
 |-----------|---------|
-| profiling-data.json has invalid pii_scan schema | "Warning: could not read PII flags from Skill A data. Running heuristic scan instead." |
+| transform-metadata.json has invalid pii_warnings schema | "Warning: could not read PII flags from Skill A metadata. Running heuristic scan instead." |
 
 PII scan does not halt the pipeline — findings are warnings only (V1 behavior).
 
@@ -161,7 +166,7 @@ No console output — this is an internal step.
 3. For each column: extract up to 5 non-null sample values via `df[col].dropna().head(5).tolist()`
 4. For PII-flagged columns: replace sample_values with `["[PII — values hidden]"]`
 5. Attach Skill A transformation report content as `skill_a_context` (string) if available
-6. Attach profiling statistics from profiling-data.json as `profiling_stats` if available
+6. Attach Skill A metadata content as `skill_a_metadata` (dict) if available — provides column transformation history and skipped transformations to inform feature suggestions
 
 ### Error Conditions
 
@@ -331,15 +336,15 @@ Maximum: 2 rejection cycles per feature. Maximum additional LLM calls per reject
 
 ### Confidence Score Assignment (Deterministic)
 
-After all three personas respond, the pipeline script counts challenges:
+After all three personas respond, the pipeline script counts challenges and assigns a fixed value matching Skill A's bands:
 
-| Condition | Score |
-|-----------|-------|
-| 0 challenges raised across all 3 personas | 5 |
-| Challenges raised, all resolved, no caveats | 4 |
-| Challenges raised, all resolved, with caveats | 3 |
-| Challenges raised, not all resolved | 2 |
-| Original rejected, alternative adopted | 1 |
+| Condition | Score | Band |
+|-----------|-------|------|
+| 0 challenges raised across all 3 personas | 95 | High |
+| Challenges raised, all resolved, no caveats | 82 | High |
+| Challenges raised, all resolved, with caveats | 67 | Medium |
+| Challenges raised, not all resolved | 50 | Medium |
+| Original rejected, alternative adopted | 35 | Low |
 
 ### Error Conditions
 
@@ -810,7 +815,7 @@ Five evaluation cases ensuring Skill B meets the spec's acceptance scenarios and
 |---|-----------|----------------|
 | 1 | Features proposed | At least one feature proposed per non-skipped batch |
 | 2 | Personas challenged | At least one persona challenge raised across all batches |
-| 3 | Confidence scores present | Every approved feature has a score 1–5 |
+| 3 | Confidence scores present | Every approved feature has a fixed-value score: 95, 82, 67, 50, or 35 |
 | 4 | Execution complete | Output CSV contains all approved features with `feat_` prefix |
 | 5 | Original columns preserved | All 12 input columns unchanged in output |
 | 6 | Row count preserved | Output has exactly 500 rows |
@@ -835,14 +840,14 @@ Five evaluation cases ensuring Skill B meets the spec's acceptance scenarios and
   - Column `account_number`: synthetic IDs (Financial PII)
   - Remaining columns: numeric, no PII
 
-**Run A:** Upload CSV + profiling-data.json (with PII flags)
-**Run B:** Upload CSV only (no profiling-data.json)
+**Run A:** Upload CSV + transform-metadata.json (with PII flags carried forward from Skill A)
+**Run B:** Upload CSV only (no metadata — fallback mode)
 
 **Pass Criteria:**
 
 | # | Criterion | Pass Condition |
 |---|-----------|----------------|
-| 1 | Run A loads PII flags | Console shows "loaded {n} flags from Skill A profiling data" |
+| 1 | Run A loads PII flags | Console shows "loaded {n} flags from Skill A transform metadata" |
 | 2 | Run B runs heuristic | Console shows "Running PII scan (heuristic)" |
 | 3 | All PII columns flagged | customer_name, email, zip_code, account_number all flagged in both runs |
 | 4 | Non-PII columns clear | Remaining 6 columns not flagged |
@@ -914,7 +919,7 @@ The following synthetic files must be created before evaluations run:
 | not-a-csv.txt | eval-001 (non-CSV file) |
 | full-pipeline-test.csv | eval-002 (full pipeline — 2 datetime, 3 categorical, 5 numeric, 1 identifier, 1 text) |
 | pii-dataset.csv | eval-003 (PII detection) |
-| pii-profiling-data.json | eval-003 Run A (Skill A PII flags) |
+| pii-transform-metadata.json | eval-003 Run A (Skill A PII flags carried forward) |
 | all-identifiers.csv | eval-004 (fast-path no-opportunity) |
 | ambiguous-data.csv | eval-004 (standard-path no-opportunity) |
 | high-cardinality.csv | eval-005 (500 categories) |
