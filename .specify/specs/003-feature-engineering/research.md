@@ -17,18 +17,25 @@ This document identifies all open technical questions that must be resolved befo
 | Check | Rule | How Validated |
 |-------|------|---------------|
 | File format | Valid CSV, parseable by `pd.read_csv()` | Hard gate — pandas parse attempt |
+| Provenance | metadata JSON exists and `produced_by == "skill_a"` | Hard gate (when metadata present) |
+| Handoff contract version | metadata `handoff_contract_version == "1.0"` | Hard gate (when metadata present) |
 | No duplicate column names | `df.columns.duplicated().any()` returns False | Hard gate — pandas check |
-| Clean column names | All columns match `r'^[a-zA-Z_][a-zA-Z0-9_]*$'` | Hard gate — regex scan |
-| Consistent types per column | Each column has a single pandas dtype — no object-type columns with mixed underlying types | Hard gate — for columns with dtype `object`, check `pd.api.types.infer_dtype(col, skipna=True)` returns a consistent type (not "mixed" or "mixed-integer") |
-| Missing values handled | Either no missing values, or Skill A's transformation report documents and justifies remaining missing values | Soft gate — if missing values exist AND no transformation report is present, warn but proceed; if transformation report is present, check that missing columns are documented |
-| Run ID traceability | Skill A's run ID is present (in profiling-data.json if available) | Informational — logged for traceability but not a hard gate |
+| Column names snake_case + ASCII | All columns match `r'^[a-z][a-z0-9_]*$'` | Hard gate — regex scan |
+| No all-missing columns | `df.isnull().all().any()` returns False | Hard gate — pandas check |
+| No exact duplicate rows | `df.duplicated().any()` returns False | Hard gate — pandas check |
+| Consistent types per column | For columns with dtype `object`: `pd.api.types.infer_dtype(col, skipna=True)` does not return "mixed" or "mixed-integer" | Hard gate |
+| Missing values handled | Either no missing values, or Skill A's transformation report documents and justifies remaining missing values | Soft gate — if missing values exist AND no metadata is present, warn but proceed |
+| Run ID traceability | metadata `run_id` and `source_profiling_run_id` are present | Informational — logged for traceability |
 
-**Optional inputs (read if available, not required):**
+**Expected three-artifact handoff from Skill A (per Skill A's DM-110):**
 
 | Input | What Skill B Gets From It |
 |-------|---------------------------|
-| profiling-data.json | PII flags, profiling statistics, quality detections — saves Skill B from re-detecting |
-| Transformation report (.md) | Context on what Skill A did — informs smarter feature suggestions |
+| `{transform_run_id}-cleaned.csv` | The cleaned dataset itself |
+| `{transform_run_id}-transform-report.md` | Context on what Skill A did — informs smarter feature suggestions |
+| `{transform_run_id}-transform-metadata.json` | Provenance marker (`produced_by: "skill_a"`), PII warnings carried forward from Feature 1, column transformation history, before/after counts, handoff contract version |
+
+**Fallback:** If the user uploads only the CSV (e.g., from a non-Skill-A source), Skill B proceeds with the CSV alone but logs a warning. The validation gates that depend on metadata are skipped, and Skill B runs its own column-name PII heuristic.
 
 **Validation failure behavior:**
 - Hard gate failure → Skill B stops immediately, identifies the specific violation, and flags for human review (FR-202)
@@ -49,9 +56,9 @@ This document identifies all open technical questions that must be resolved befo
 |--------|----------|-----------|
 | A | Full two-layer scan (heuristic + LLM value inspection) — same as Skill A | Thorough but expensive; duplicates Skill A's work |
 | B | Lightweight column-name heuristic only — no LLM value inspection | Fast and cheap; relies on Skill A having done the thorough scan already |
-| C | Read PII flags from profiling-data.json if available; run heuristic scan if not | Best of both — gets full PII data when available, falls back gracefully |
+| C | Read PII flags from transform-metadata.json if available; run heuristic scan if not | Best of both — gets PII data carried forward by Skill A, falls back gracefully |
 
-**Recommendation:** Option C. When profiling-data.json is present, Skill B reads Skill A's PII flags directly — no re-scanning needed. When absent, Skill B runs a lightweight column-name heuristic (word-boundary matching against a token list of PII-indicative terms). No LLM value inspection in either case — Skill B's PII check is a safety net, not the primary detection.
+**Recommendation:** Option C. When transform-metadata.json is present, Skill B reads the `pii_warnings` array directly — Skill A has already carried PII flags forward from Feature 1. When absent, Skill B runs a lightweight column-name heuristic (word-boundary matching against a token list of PII-indicative terms). No LLM value inspection in either case — Skill B's PII check is a safety net, not the primary detection.
 
 **Heuristic token list (same as Skill A's Layer 1):**
 
@@ -95,7 +102,7 @@ This document identifies all open technical questions that must be resolved befo
 |---------|-------|-------------|----------------|
 | Feature Relevance Skeptic | Challenge loop | Is this feature redundant? Does it add info beyond existing columns? | Correlation with existing columns. If proposed feature would be >0.95 correlated with an existing column, challenge it. |
 | Statistical Reviewer | Challenge loop | Is this method valid for this data's distribution and type? | Actual column stats — skewness, cardinality, variance. Catches zero-variance normalization, high-cardinality one-hot, etc. |
-| Domain Expert | Challenge loop | Does this make business sense? Would a data scientist use this? | Synchrony-style metric patterns. Catches zero-denominator ratios, meaningless derived features. |
+| Domain Expert | Challenge loop | Does this make business sense? Would a data scientist use this? | Industry-standard financial and retail metric patterns. Catches zero-denominator ratios, meaningless derived features. |
 | Data Analyst | Post-execution | Did the transformations produce what was expected? | Before/after comparison of actual data. Catches NaN, infinity, wrong encodings, missing columns, row count changes. |
 
 **Each persona receives:**
@@ -174,7 +181,7 @@ This document identifies all open technical questions that must be resolved befo
 
 ## RQ-006 — Aggregate Feature Implementation
 
-**Question:** How does Skill B implement group-level aggregate metrics (like the Synchrony-style metrics) as row-level columns?
+**Question:** How does Skill B implement group-level aggregate metrics (such as financial services or retail KPIs) as row-level columns?
 
 **Approach:** pandas `groupby().transform()` pattern. This computes the aggregate at the group level and maps it back to every row in the group, preserving the original DataFrame's row count.
 
@@ -205,33 +212,33 @@ This `groupby().agg()` + merge pattern is more efficient than calling `transform
 
 **Question:** What scale and criteria should confidence scores use?
 
-**Recommendation:** 1–5 ordinal scale, justified by persona loop outcomes.
+**Recommendation:** 0–100 scale with fixed values matching Skill A's DM-105 confidence bands. This keeps scoring consistent across both skills so a stakeholder reading either report sees the same scale.
 
-| Score | Label | When Assigned |
-|-------|-------|---------------|
-| 5 | Strong consensus | All three challenge personas approved, no challenges raised |
-| 4 | Approved with minor note | All approved, one minor question raised and resolved |
-| 3 | Approved with caveats | Substantive concerns raised and addressed |
-| 2 | Weakly approved | Unresolved concerns — feature included with documented risk |
-| 1 | Contested | Original rejected, alternative adopted — limited confidence in alternative |
+| Score | Band | When Assigned |
+|-------|------|---------------|
+| 95 | High | All three challenge personas approved, no challenges raised |
+| 82 | High | All approved, one minor question raised and resolved |
+| 67 | Medium | Substantive concerns raised and addressed |
+| 50 | Medium | Unresolved concerns — feature included with documented risk |
+| 35 | Low | Original rejected, alternative adopted — limited confidence in alternative |
 
 **How it appears in the report:**
 ```
 **Feature: feat_revenue_per_unit**
-**Confidence: 4/5**
+**Confidence: 82/100 (High)**
 All personas approved. The Statistical Reviewer flagged that 3 rows
 have a zero denominator — these are handled by replacing with NaN.
 ```
 
 **Score assignment:** Each challenge persona returns a structured response that includes: `approved: true/false`, `challenges_raised: [list]`, `challenges_resolved: [list]`. The pipeline script parses these structured responses and assigns the score deterministically:
 
-- 0 challenges raised → 5/5
-- Challenges raised, all resolved, no lingering notes → 4/5
-- Challenges raised, all resolved, with lingering caveats documented → 3/5
-- Challenges raised, not all fully resolved → 2/5
-- Original rejected, alternative adopted → 1/5
+- 0 challenges raised → 95 (High)
+- Challenges raised, all resolved, no lingering notes → 82 (High)
+- Challenges raised, all resolved, with lingering caveats documented → 67 (Medium)
+- Challenges raised, not all fully resolved → 50 (Medium)
+- Original rejected, alternative adopted → 35 (Low)
 
-This keeps scoring objective — it's based on what happened in the loop, not the LLM rating its own confidence.
+This keeps scoring objective — it's based on what happened in the loop, not the LLM rating its own confidence. The fixed-value approach (matching Skill A) avoids false precision from arbitrary numbers like 87 vs 89.
 
 ---
 
@@ -305,8 +312,8 @@ Feature: feat_revenue_per_unit
 Benchmark: Revenue per unit normalizes for order size. Without it,
 a $500 order of 100 items and a $500 order of 1 item look identical —
 but they represent very different purchasing behaviors. This metric is
-a standard retail KPI used by Synchrony and similar financial services
-companies to assess transaction quality.
+a standard retail and financial services KPI used to assess transaction
+quality.
 ```
 
 ---
@@ -388,7 +395,7 @@ companies to assess transaction quality.
 2. Feature Relevance Skeptic asks: "Are you sure? No date columns, no categorical columns, no numeric pairs worth combining?"
 3. Statistical Reviewer asks: "Are there any distributional patterns that suggest useful transformations?"
 4. Domain Expert asks: "Would a data scientist working with this data want any derived features?"
-5. If all three agree → approved as "no opportunities" with confidence score (likely 5/5 if unanimous)
+5. If all three agree → approved as "no opportunities" with confidence score (likely 95/100 if unanimous)
 
 **Both paths produce:**
 6. Original CSV output unchanged
