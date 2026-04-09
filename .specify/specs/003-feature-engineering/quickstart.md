@@ -10,7 +10,7 @@ Minimal end-to-end walkthrough of Skill B: user uploads a cleaned CSV from Skill
 
 - A Claude.ai account with access to the conversation interface
 - A cleaned CSV produced by Skill A (or any CSV that meets the handoff contract)
-- **Optional:** Skill A's profiling-data.json and transformation report — these give Skill B extra context but are not required
+- **Expected from Skill A:** Skill A produces three artifacts together (cleaned CSV, transform report, transform metadata JSON). Upload all three when available — they give Skill B everything it needs. If you only have the CSV, Skill B falls back to a reduced mode.
 
 No special setup required — no API keys, no local installation, no configuration.
 
@@ -18,7 +18,7 @@ No special setup required — no API keys, no local installation, no configurati
 
 ## Step 1 — Upload Files and Request Feature Engineering
 
-Upload your cleaned CSV using the file attachment button in Claude.ai. If you have Skill A's profiling-data.json and/or transformation report, upload those too.
+Upload your cleaned CSV using the file attachment button in Claude.ai. If you have Skill A's transform report and transform metadata JSON, upload those too — they're part of the standard three-artifact handoff.
 
 Then ask for feature engineering in natural language. Examples:
 
@@ -45,8 +45,8 @@ The system validates the uploaded CSV against the Skill A handoff contract. The 
 ✅ Column names: no duplicates, no special characters
 ✅ Types: consistent within each column
 ✅ Run ID: feature-20260406-091533-b2f1
-ℹ️ Skill A profiling data: found — PII flags and profiling stats loaded
-ℹ️ Skill A transformation report: found — context loaded
+ℹ️ Skill A transform metadata: found — provenance verified, PII flags loaded
+ℹ️ Skill A transform report: found — context loaded
 
 All checks passed. Starting feature engineering pipeline...
 ```
@@ -54,8 +54,8 @@ All checks passed. Starting feature engineering pipeline...
 If optional files are not present:
 
 ```
-ℹ️ Skill A profiling data: not found — Skill B will run its own PII scan
-ℹ️ Skill A transformation report: not found — proceeding without Skill A context
+ℹ️ Skill A transform metadata: not found — Skill B will run its own PII scan
+ℹ️ Skill A transform report: not found — proceeding without Skill A context
 ```
 
 If a hard gate fails:
@@ -75,7 +75,7 @@ The system checks for personally identifiable information. The user sees:
 
 If PII flags were loaded from Skill A's JSON:
 ```
-🔒 PII scan: loaded 3 flags from Skill A profiling data
+🔒 PII scan: loaded 3 flags from Skill A transform metadata
 ⚠️ Column 'customer_name' — Direct PII (names)
 ⚠️ Column 'email_address' — Direct PII (email)
 ⚠️ Column 'zip_code' — Indirect PII (postal code)
@@ -127,7 +127,7 @@ This review process is how the pipeline prevents bad or unnecessary features fro
       straightforward for this column type.
    🔎 Domain Expert: All 3 approved — standard retail time features.
 
-   ✅ Batch 1 complete: 3 features approved (confidence: 5/5, 5/5, 5/5)
+   ✅ Batch 1 complete: 3 features approved (confidence: 95/100, 95/100, 95/100)
 ```
 
 **Batch 2 — Text Features:**
@@ -160,7 +160,7 @@ This review process is how the pipeline prevents bad or unnecessary features fro
 
    ⚠️ Feature 'avg_sale_per_account' rejected (redundant).
    ✅ Batch 3 complete: 2 features approved, 1 rejected
-      (confidence: 5/5, 5/5)
+      (confidence: 95/100, 95/100)
 ```
 
 **Batches 4–6** follow the same pattern. If a feature is rejected and an alternative is proposed:
@@ -170,7 +170,7 @@ This review process is how the pipeline prevents bad or unnecessary features fro
       "median is sensitive to the skewed distribution in this column."
    🔄 Alternative proposed: 'price_to_mean_ratio' — using mean instead.
    🔎 Personas reviewing alternative...
-   ✅ Alternative approved (confidence: 3/5 — approved with caveats)
+   ✅ Alternative approved (confidence: 67/100 — approved with caveats)
 ```
 
 ---
@@ -257,7 +257,7 @@ The data dictionary is also shown inline after the transformation report, so you
 **Input File**: sales_data_cleaned.csv
 **Input Shape**: 1,247 rows × 14 columns
 **Output Shape**: 1,247 rows × 28 columns (14 features added)
-**Confidence Score Range**: 3/5 – 5/5
+**Confidence Score Range**: 67/100 – 95/100
 
 ---
 
@@ -270,11 +270,11 @@ The data dictionary is also shown inline after the transformation report, so you
 
 | Feature | Type | Source | Confidence |
 |---------|------|--------|------------|
-| feat_day_of_week | int64 | order_date | 5/5 |
-| feat_hour_of_day | int64 | order_date | 5/5 |
-| feat_month | int64 | order_date | 5/5 |
-| feat_net_sales_per_account | float64 | account_id, sale_amount | 5/5 |
-| feat_transaction_count | int64 | account_id | 5/5 |
+| feat_day_of_week | int64 | order_date | 95/100 |
+| feat_hour_of_day | int64 | order_date | 95/100 |
+| feat_month | int64 | order_date | 95/100 |
+| feat_net_sales_per_account | float64 | account_id, sale_amount | 95/100 |
+| feat_transaction_count | int64 | account_id | 95/100 |
 | ... | ... | ... | ... |
 
 (Full detail for all 14 features available in the download.)
