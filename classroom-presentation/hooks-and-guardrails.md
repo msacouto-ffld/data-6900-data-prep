@@ -1,7 +1,7 @@
 # Hooks in AI-Assisted Code Generation — 30-Minute Lesson Plan
 
 **Audience:** Analytics practitioners and teams using AI coding agents
-**Format:** 3 presenters, 10 minutes each, with a live demo in Part 2
+**Format:** 3 presenters, 10 minutes each, with a live A/B demo in Part 2
 
 ---
 
@@ -13,209 +13,307 @@ Learners understand what hooks are, how the lifecycle works, and why determinist
 
 ### Talking Points (0:00–5:00) — The Core Concept
 
-- **Open with the reliability problem.** AI models are probabilistic — you can ask an agent to "always run tests after editing code," but it may skip that step. Hooks convert polite suggestions into guaranteed actions. Frame hooks as "if this, then that" rules that run every time, no exceptions.
+- **Open with the reliability problem.** AI models are probabilistic — you can ask an agent to "always validate the data before running the pipeline," but it may skip that step. Hooks convert polite suggestions into guaranteed actions. Frame hooks as "if this, then that" rules that run every time, no exceptions.
 - **Walk through the 5-step lifecycle.** Use a whiteboard or simple diagram:
   1. An event fires (tool call, session start, task end).
   2. The system finds registered hooks for that event type.
   3. Matchers filter which hooks apply (e.g., only file-write operations).
   4. The hook callback executes with contextual data (tool name, arguments, session info).
   5. The hook returns a decision: allow, block, modify inputs, or inject context.
-- **Stress the key distinction:** deterministic vs. probabilistic control. Instructions in a CLAUDE.md or system prompt are *suggestions*. A PreToolUse hook with exit code 2 *blocks* an action 100% of the time.
+- **Stress the key distinction:** deterministic vs. probabilistic control. A hook runs *every* time — no exceptions, no "the model forgot." This is the core reason hooks exist.
 
-### Talking Points (5:00–10:00) — Why Analytics Teams Should Care
+### Talking Points (5:00–8:00) — The "So What?" — Three Things Hooks Give You
 
-Cover these six capabilities quickly (one sentence each, with a concrete example):
+Don't just list capabilities — frame each one around what goes wrong *without* it:
 
-- **Automated data validation** — PostToolUse hook runs schema checks every time a pipeline script is generated.
-- **Code standards enforcement** — auto-format with Black/Prettier after every file edit.
-- **Security guardrails** — PreToolUse hook blocks dropping database tables or writing to production directories.
-- **Audit logging** — every tool call logged for compliance and debugging.
-- **Auto-documentation** — trigger docstring/README generation after code is written.
-- **Input/output transformation** — sanitize data paths or inject credentials transparently.
+1. **Validation gates** — Block bad data before the LLM ever sees it. Without a gate, the LLM "tries to be helpful" on garbage input and produces plausible-looking nonsense. Imagine Skill A outputs a CSV with duplicate column names. Without a hook, Skill B might silently rename them and proceed — and now your feature-engineered dataset has columns nobody asked for. With a hook, the pipeline stops and tells you exactly what's wrong.
 
-Close with the "non-coder advantage": a well-configured set of hooks means you don't need to understand every line of AI-generated code — the hooks enforce formatting, testing, documentation, and safety before anything reaches production.
+2. **Observability and logging** — Hooks can produce structured logs of every action the agent takes, giving you an audit trail. This matters for compliance, debugging, and trust. Example: a `PostToolUse` hook that writes a JSON log entry every time the agent writes or modifies a file — what file, what tool, what timestamp. If an output looks wrong, you can trace backward through the log instead of re-running the whole pipeline and hoping you catch it. In our pipeline, a logging hook on the Skill A → Skill B handoff could record every validation result — pass or fail — with the run ID and contract checks, building a mistake log over time.
 
-### Suggested Visual Aid
-A simple two-column slide or whiteboard comparison: "Prompt-based instruction (probabilistic)" vs. "Hook (deterministic)" with examples of each.
+3. **Context injection** — Feed the agent extra information (schemas, contracts, prior results) at exactly the right moment. A `PreToolUse` hook can inject Skill A's profiling report into Skill B's context *before* feature engineering starts, so the LLM doesn't have to be told to look for it — it's already there.
+
+### Talking Points (8:00–10:00) — Hooks in the Wild: OpenClaw
+
+Briefly connect to a current real-world example so this doesn't feel academic:
+
+- **OpenClaw** (formerly Clawdbot, now 100k+ GitHub stars) is an open-source AI agent framework that shipped a native hooks system in early 2026. Their architecture mirrors exactly what we've been describing: hooks fire on agent events (`command:new`, `command:stop`, lifecycle events), they're discovered automatically from a `hooks/` directory, and they can be enabled/disabled via CLI (`openclaw hooks enable session-memory`).
+- Two of their built-in hooks are good illustrations: `session-memory` saves session context to a workspace file on every `/new` command (observability), and `command-logger` writes structured JSON logs of every action with timestamps and session IDs (audit trail). These are the same patterns we'll use in our pipeline.
+- The key architectural point: OpenClaw hooks run *inside the gateway process*, meaning they can synchronously intercept and block actions — exactly like our `PreToolUse` validation gate. This is different from external webhook services that add network latency and can't hard-block.
+
+Then briefly cover the mechanics:
+- In Claude Code, hooks are configured in `.claude/settings.json` (project-level) or `~/.claude/settings.json` (user-level). The actual hook scripts go in `.claude/hooks/` by convention.
+- Hooks communicate via exit codes: **0 = proceed**, **2 = block**, **1 = non-blocking error**. They can also return structured JSON via stdout for richer feedback.
+- This is separate from skills. Skills live in their own directory. Hooks are *infrastructure* — they enforce rules across skills.
+
+**Transition:** "Now Presenter B will show you what this looks like in practice — with a real hook built for a real skill pipeline, and an A/B test so you can see the difference."
 
 ---
 
-## Part 2: Hooks Across Platforms + Live Demo (10 min)
+## Part 2: Live A/B Demo — Contract Validation Hook (10 min)
 **Presenter B**
 
 ### Objective
-Learners see how hooks are configured on the major platforms and watch a real hook built for an analytics data-cleaning skill.
+Learners see — side by side — what happens when a skill-to-skill handoff runs *without* a hook versus *with* a hook enforcing the contract.
 
-### Talking Points (10:00–13:00) — Platform Landscape (3 min)
+### Setup Context (10:00–11:00) — Explain the Pipeline (1 min)
 
-Quickly contrast the four platforms. Don't read the table — just highlight what makes each one different:
+"We're building a two-skill analytics pipeline:
 
-| Platform | Key Differentiator |
-|---|---|
-| **Claude Agent SDK** | Most fully featured — 17+ events, Python/TS callbacks, matchers, permission decisions, async support. |
-| **Claude Code CLI** | Shell command hooks in `.claude/settings.json`. JSON I/O via stdin/stdout. Great for quick automation. |
-| **GitHub Copilot** | Hooks live in `.github/hooks/` on the default branch. Repo-scoped and version-controlled by default. |
-| **Cursor** | Hooks integrated with Rules & Skills. Supports "grind loop" — agent iterates until all tests pass. |
-| **Kiro (AWS)** | Event-based (file save/create), not tool-based. Tied to spec-driven 3-phase workflow. |
+- **Skill A** (Data Cleaning) takes a raw CSV, validates it, profiles it with ydata-profiling, and outputs a *cleaned CSV*.
+- **Skill B** (Feature Engineering) takes that cleaned CSV and engineers new features — one-hot encoding, date extraction, derived ratios, normalization.
 
-### Live Demo (13:00–19:00) — Build a CSV Validation Gate for a Data Profiling Skill (6 min)
+Skill B has a *handoff contract* — a set of hard gates the cleaned CSV must pass before feature engineering starts. The contract checks things like: no duplicate column names, no special characters in headers, consistent types per column, no empty files, and a cell count under 500,000.
 
-**Context for the audience (30 seconds):** "We're building a data-cleaning skill where a user uploads a raw CSV, the system profiles it with ydata-profiling, and the LLM writes a natural language report. The spec says the system *must* reject empty CSVs, catch duplicate column names, and flag special characters — every single time. That's a perfect hook use case: it must happen every time, it's pattern-matching, and failure should block the pipeline before the LLM ever sees the data."
+For this demo, we don't need Skill A fully built. We have two scaffold CSVs: one that passes the contract, and one that violates it. The question is: **what catches the violation?**"
 
-Walk through the four steps live in a terminal:
+### Demo Part A — Without the Hook (11:00–14:30) — "The Silent Failure" (3.5 min)
 
-**Step 1 — Create the hook script** at `.claude/hooks/validate-csv.sh`:
+**Narrate as you go:**
+
+"Right now, Skill B's contract validation lives inside its prompt instructions. The SKILL.md tells the LLM to validate the input before proceeding. Let's see what happens when we hand it a bad CSV."
+
+**Step 1 — Show the bad CSV** (`bad-handoff.csv`):
+
+```
+customer_id,revenue,revenue,signup_date,category
+101,500,,2024-01-15,Premium
+102,,"",2024/02/20,basic
+103,300,300,,PREMIUM
+```
+
+Point out the violations:
+- `revenue` column name is duplicated (violates validation step 7)
+- Mixed date formats and missing values (violates step 9 — inconsistent types)
+- Inconsistent casing in `category` (`Premium` vs `basic` vs `PREMIUM`) — Skill A should have standardized this
+
+**Step 2 — Run Skill B without the hook:**
+
+Show the LLM receiving the bad CSV. Because the validation is only in the prompt, the LLM may:
+- Skip validation entirely and jump to feature engineering
+- Notice *some* issues but proceed anyway ("I see duplicates but I'll rename them")
+- Miss the inconsistent types entirely
+
+**Step 3 — Show the damage:**
+
+The LLM produces a feature-engineered CSV with nonsense: one-hot encoding on the duplicated `revenue` column, date extraction that fails silently on the inconsistent formats, and no error report.
+
+**Key line:** "The LLM didn't refuse. It didn't flag. It *tried to be helpful* — and that's the problem. Probabilistic validation means sometimes it catches issues, sometimes it doesn't. You'll never know which run was safe."
+
+### Demo Part B — With the Hook (14:30–18:30) — "The Hard Gate" (4 min)
+
+**Step 1 — Show the hook script** (`.claude/hooks/validate-handoff.sh`):
 
 ```bash
 #!/bin/bash
-# PreToolUse hook: validate CSV before the profiling pipeline runs
+# PreToolUse hook — validates Skill A → Skill B handoff contract
+# Runs BEFORE any tool call matching the feature engineering pipeline
+
 INPUT=$(cat)
-FILE=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty')
+FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty')
 
-# Skip if no file path provided
-if [ -z "$FILE" ] || [ ! -f "$FILE" ]; then
-  exit 0
+if [ -z "$FILE_PATH" ] || [ ! -f "$FILE_PATH" ]; then
+  echo '{"decision":"block","reason":"No file path provided or file not found."}'
+  exit 2
 fi
 
-# Only validate CSV files
-EXT="${FILE##*.}"
-if [ "$EXT" != "csv" ]; then
-  exit 0
-fi
-
-# Run validation checks via Python
+# Run the contract validation checks
 python3 -c "
 import pandas as pd, sys, json
 
+path = '$FILE_PATH'
 errors = []
+
+# Step 2: Parse check
 try:
-    df = pd.read_csv('$FILE')
+    df = pd.read_csv(path)
 except Exception as e:
-    print(json.dumps({'error': f'Not a valid CSV: {e}'}))
-    sys.exit(2)  # EXIT 2 = BLOCK the operation
+    print(json.dumps({'decision':'block','reason':f'Not a valid CSV: {e}'}))
+    sys.exit(0)
 
-# FR-003: Reject empty CSVs (headers only, no rows)
+# Step 3: At least 1 column
+if len(df.columns) == 0:
+    errors.append('CSV has no columns.')
+
+# Step 4: At least 1 data row
 if len(df) == 0:
-    errors.append('Empty CSV — headers only, no data rows.')
+    errors.append('CSV has headers but no data rows.')
 
-# FR-009: Detect duplicate column names
-dupes = [c for c in df.columns if list(df.columns).count(c) > 1]
+# Step 5: Cell count limit
+cells = df.shape[0] * df.shape[1]
+if cells > 500_000:
+    errors.append(f'Dataset exceeds 500k cell limit ({cells} cells).')
+
+# Step 7: Duplicate column names
+dupes = df.columns[df.columns.duplicated()].tolist()
 if dupes:
-    errors.append(f'Duplicate column names: {set(dupes)}')
+    errors.append(f'Duplicate column names: {dupes}')
 
-# FR-010: Detect special characters in column names
+# Step 8: Special characters in column names
 import re
-bad_cols = [c for c in df.columns if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', str(c))]
+bad_cols = [c for c in df.columns if not re.match(r'^[a-zA-Z0-9_ ]+$', c)]
 if bad_cols:
-    errors.append(f'Non-standard column names: {bad_cols}')
+    errors.append(f'Special characters in column names: {bad_cols}')
+
+# Step 9: Consistent types per column
+for col in df.columns:
+    types = df[col].dropna().apply(type).unique()
+    if len(types) > 1:
+        errors.append(f\"Column '{col}' has mixed types: {[t.__name__ for t in types]}\")
 
 if errors:
-    print(json.dumps({'errors': errors}))
-    sys.exit(2)  # BLOCK — do not proceed to profiling
+    print(json.dumps({'decision':'block','reason':'Handoff contract violations: ' + '; '.join(errors)}))
+else:
+    print(json.dumps({'decision':'allow','reason':'All handoff contract checks passed.'}))
 "
+
+RESULT=$?
+if echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); sys.exit(0 if d.get('decision')=='allow' else 2)" 2>/dev/null; then
+  exit 0
+else
+  exit 2
+fi
 ```
 
-**Step 2 — Make it executable:**
+Walk through the key points:
+- This is a **PreToolUse** hook — it fires *before* the LLM's tool call executes
+- It reads the file path from the tool input JSON via stdin
+- It runs the same checks from the handoff contract (steps 2–9 from the validation rules table)
+- Exit code 2 = hard block. The LLM never proceeds.
 
-```bash
-chmod +x .claude/hooks/validate-csv.sh
-```
-
-**Step 3 — Register it** in `.claude/settings.json`:
+**Step 2 — Register the hook** in `.claude/settings.json`:
 
 ```json
 {
   "hooks": {
     "PreToolUse": [{
-      "matcher": "Write|Execute",
-      "hooks": [{ "type": "command", "command": ".claude/hooks/validate-csv.sh" }]
+      "matcher": "Read|Execute",
+      "hooks": [{
+        "type": "command",
+        "command": ".claude/hooks/validate-handoff.sh"
+      }]
     }]
   }
 }
 ```
 
-**Step 4 — Test it with a bad CSV:**
+**Step 3 — Run the same bad CSV through Skill B again:**
 
-```bash
-# Create a CSV with duplicate columns and special characters
-echo 'Name,Name,Email Address,score!' > bad_data.csv
-echo 'Alice,A,alice@test.com,95' >> bad_data.csv
+This time the hook fires, catches the duplicate column names and type inconsistencies, and **blocks the pipeline with a structured error message**:
 
-echo '{"tool_input":{"file_path":"bad_data.csv"}}' | .claude/hooks/validate-csv.sh
-echo $?  # Should print 2 (BLOCKED)
-
-# Now test with a clean CSV
-echo 'name,email,score' > clean_data.csv
-echo 'Alice,alice@test.com,95' >> clean_data.csv
-
-echo '{"tool_input":{"file_path":"clean_data.csv"}}' | .claude/hooks/validate-csv.sh
-echo $?  # Should print 0 (ALLOWED)
+```json
+{
+  "decision": "block",
+  "reason": "Handoff contract violations: Duplicate column names: ['revenue']; Column 'signup_date' has mixed types"
+}
 ```
 
-**Demo tip:** The payoff is the exit code. Show `$? = 2` for the bad CSV and `$? = 0` for the clean one. Then connect it back to Presenter A's point: "We didn't ask the LLM to check for duplicate columns. We didn't put it in a system prompt and hope. The hook *guarantees* this CSV never reaches ydata-profiling unless it passes validation. That's the difference between probabilistic and deterministic."
+The LLM never gets to attempt feature engineering. The user sees exactly what's wrong and knows to go back to Skill A.
 
-### Talking Points (19:00–20:00) — What Stays Outside the Hook (1 min)
+**Step 4 — Show the good CSV** (`good-handoff.csv`) passing through cleanly:
 
-Use the same skill to show the boundary: "Our spec also requires PII detection — scanning columns for names, emails, SSNs. That's *not* a hook. PII detection requires the LLM to reason about the content and context of column values, not just pattern-match file structure. That belongs in a skill or prompt-based rule. The decision framework is simple: if it's mechanical validation, make it a hook. If it requires judgment, keep it in the LLM." This sets up Presenter C's discussion of skills vs. hooks vs. sub-agents.
+```
+customer_id,revenue,signup_date,category
+101,500,2024-01-15,premium
+102,350,2024-02-20,basic
+103,300,2024-03-10,premium
+```
+
+Hook returns `{"decision": "allow"}`, exit code 0, pipeline proceeds.
+
+**Key line:** "Same pipeline, same LLM, same prompt. The only difference is one line in `settings.json`. The hook turned a *suggestion* into a *guarantee*."
+
+### Closing the Demo (18:30–20:00) — Hook vs. Skill Boundary (1.5 min)
+
+"So should everything be a hook? No. Here's the distinction:
+
+- The **contract validation** (duplicate columns, cell limits, type consistency) is a **hook** — it's pattern matching, it must happen every time, and failure should hard-block.
+- The **feature engineering decisions** inside Skill B (should we one-hot encode this column? is this ratio meaningful?) — those stay in the **skill/prompt**. They require LLM judgment, domain reasoning, and the persona validation loop.
+
+The rule of thumb: if a human would say 'this must *never* get through,' it's a hook. If a human would say 'use your judgment,' it's a skill."
+
+**Transition:** "Presenter C will now give you the framework for making that decision systematically."
 
 ---
 
-## Part 3: When to Use Hooks & What Comes Next (10 min)
+## Part 3: Applying Hooks to Our Projects (10 min)
 **Presenter C**
 
 ### Objective
-Learners know when hooks are the right tool (and when they aren't), understand how hooks differ from skills and sub-agents, and leave with clear next steps.
+Learners can distinguish hooks from skills/sub-agents and see exactly where hooks apply in their own Synchrony project work.
 
-### Talking Points (20:00–24:00) — The Decision Framework (4 min)
+### Talking Points (20:00–23:00) — The Decision Framework (3 min)
 
-Frame this as five quick yes/no questions:
+Present this as a quick decision tree:
 
-| Question | If Yes | If No |
+| Ask yourself… | If YES → | If NO → |
 |---|---|---|
-| Must it happen every single time? | **Hook** | Skill or prompt rule |
-| Does it need AI judgment about content? | Skill or sub-agent | Shell command hook |
-| Is it a side effect like logging? | Async hook | — |
-| Does it block dangerous actions? | PreToolUse + exit code 2 | Permission rules |
-| Is it project-specific? | `.claude/settings.json` | `~/.claude/settings.json` |
+| Must this happen every single time, with zero exceptions? | Hook | Skill/prompt |
+| Is it pattern matching (not reasoning)? | Hook | Skill/prompt |
+| Should failure hard-block the pipeline? | Hook | Skill/prompt (or soft warning) |
+| Does it require domain judgment or contextual reasoning? | Skill/prompt | Hook |
 
-Give concrete "don't use hooks" examples: exploratory research (hooks add rigidity), one-off operations (just ask the AI), and anything requiring content understanding (hooks are pattern-matchers, not reasoners). Also flag latency — synchronous hooks that run longer than 5 seconds degrade the experience.
+Walk through two examples from the demo pipeline:
 
-### Talking Points (24:00–27:00) — Skills vs. Hooks vs. Sub-Agents (3 min)
+1. **"Reject CSVs with duplicate column names"** → Must happen every time? Yes. Pattern matching? Yes. Hard block? Yes. → **Hook.**
+2. **"Decide whether to one-hot encode a categorical column with 500 unique values"** → Requires judgment? Yes. Context-dependent? Yes. → **Skill** (specifically, the persona validation loop in Skill B).
 
-Use one sentence per mechanism, then a concrete example:
+### Talking Points (23:00–25:00) — Hooks in Our Pipeline (2 min)
 
-- **Skills** are markdown instruction packages the AI loads on demand. They're probabilistic — the agent decides whether to use them. *Example: a "data-pipeline-conventions" skill that tells the agent to use Pandas and follow naming conventions.*
-- **Hooks** are deterministic scripts that fire at lifecycle events. They run outside the LLM and can't reason about content. *Example: PostToolUse hook running Black on every Python file — the agent's preferences are irrelevant.*
-- **Sub-agents** are isolated AI instances with their own context window. They prevent context pollution and can run in parallel. *Example: a "data-quality-reviewer" sub-agent that analyzes generated code without crowding the main conversation.*
+Walk through the specific hook opportunities in our Data Cleaning → Feature Engineering pipeline:
 
-**The one-liner:** Use CLAUDE.md for memory, skills for routines, hooks for guarantees, sub-agents for delegation.
+- **Handoff contract gate** (what we just demoed) — PreToolUse hook that validates Skill A's output against the 12-step contract before Skill B starts. This is the first and most important hook because it sits at the trust boundary between two independently developed skills.
+- **Observability / mistake log hook** — PostToolUse hook that appends a structured JSON entry to a run log every time a validation passes or fails (Skill B's FR-221 requires a mistake log). Over time, this builds the data the PM needs to spot recurring patterns and trigger constitution updates. This is the same pattern OpenClaw uses with their `command-logger` hook.
+- **Output schema check** — PostToolUse hook that verifies Skill B's three final deliverables (feature-engineered CSV, transformation report, data dictionary) all exist and conform to expected structure before the pipeline reports success. This catches the case where the LLM claims it's done but quietly skipped the data dictionary.
 
-### Talking Points (27:00–30:00) — Next Steps & Resources (3 min)
+Then clarify what stays *out* of hooks:
+- Feature engineering decisions (one-hot vs. label encoding, whether a derived ratio is meaningful) → **Skill B's persona validation loop** — this requires LLM reasoning.
+- PII detection in Skill A → **Skill A's prompt instructions** — this requires AI judgment about column content, not pattern matching.
+- Plain-language compliance checks (FR-223, FR-224) → **Skill B's jargon scan script** — this is deterministic but runs *within* the skill's execution, not at a boundary.
 
-Give the team a concrete starting checklist:
+### Talking Points (25:00–27:00) — How This Applies to Other Projects (2 min)
 
-1. **Start with two hooks:** an auto-formatter (PostToolUse on `Write|Edit`) and a security gate (PreToolUse on `Bash`). These cover the most common failure modes with minimal setup.
-2. **Version-control your hooks.** Store them in `.claude/settings.json` or `.github/hooks/` so every team member gets the same safety gates.
-3. **Try the `/powerup` command** in Claude Code — select "Hooks Basics" for an interactive in-terminal walkthrough.
-4. **Explore spec-driven development** for complex analytics projects — combine specifications with hooks to ensure AI-generated code meets documented requirements.
+Connect hooks to Team JAS's AI-Powered Evaluation Framework to show the concept isn't pipeline-specific:
+
+- **Team JAS** is building an evaluation framework that benchmarks Claude, Gemini, and ChatGPT across SQL and Python tasks. Their pipeline runs each model on a standardized prompt, then scores the output on correctness, performance, formatting, and AI Critic review. Where could hooks help?
+  - **PreToolUse gate on prompt injection**: Before each model receives a task prompt, a hook could verify the prompt matches the canonical task bank — ensuring no accidental modifications or model-specific tweaks slip in. This protects the "one-shot, no revisions" evaluation guarantee.
+  - **PostToolUse logging for reproducibility**: After each evaluation run, a hook could log the exact model, prompt, dataset variant, and timestamp to a structured audit file — making it trivial to reproduce any scorecard result. This is the same observability pattern from Part 1.
+  - **Output schema validation**: After the evaluation harness produces a scorecard JSON, a hook could validate that every required field (correctness score, performance metrics, Critic review) is present before the scorecard is marked complete — catching partial runs before they contaminate the final report.
+
+**Key point:** "The pattern is the same regardless of the project: find the trust boundary, write a deterministic check, make it a hook. Whether you're validating a cleaned CSV or an evaluation prompt, the architecture is identical."
+
+### Talking Points (27:00–29:00) — Action Plan (2 min)
+
+Give the team four concrete steps:
+
+1. **Map your trust boundaries.** In our pipeline, it's the Skill A → Skill B handoff. In Team JAS's framework, it's the prompt → model and model → scorecard boundaries. Every multi-step AI workflow has at least one.
+2. **Start with one hook.** Write a shell script that checks 2–3 things at that boundary and exits with code 2 on failure. Keep it under 30 lines. Our `validate-handoff.sh` is a good template.
+3. **Add a logging hook second.** Once validation is working, add a PostToolUse hook that writes structured JSON logs. This builds your audit trail and feeds your mistake log over time.
+4. **Review against your spec.** Walk through your feature spec's functional requirements and ask: "Which of these *must* happen every time and can be checked without LLM reasoning?" Those are your hook candidates.
+
+### Talking Points (29:00–30:00) — Resources & Close (1 min)
 
 Recommend these learning resources:
 - DataCamp: "Claude Code Hooks: A Practical Guide to Workflow Automation"
 - Blake Crosley: "Claude Code Hooks Tutorial: 5 Production Hooks From Scratch"
 - DEV Community: "Claude Code Hooks Guide 2026"
-- GitHub Docs: "Using Hooks with GitHub Copilot Agents"
+- OpenClaw Docs: Hooks documentation at docs.openclaw.ai/automation/hooks
 
 ### Close
-Open the floor for questions. If time is short, remind the group that hooks are low-effort, high-impact — two hooks and 15 minutes of setup can eliminate entire categories of errors from AI-generated code.
+Open the floor for questions. If time is short, remind the group: "The A/B demo showed the whole point — same LLM, same prompt, same data. Without the hook, the bad CSV slipped through and the LLM tried to be helpful on garbage data. With the hook, it was caught and blocked before the LLM ever saw it. That's the difference between a suggestion and a guarantee — and every one of our projects has places where that difference matters."
 
 ---
 
 ## Preparation Checklist
 
-- [ ] Presenter A: Prepare a whiteboard/slide showing the 5-step lifecycle diagram
-- [ ] Presenter B: Set up a terminal with Claude Code, jq, and Python 3 (with pandas) installed
-- [ ] Presenter B: Prepare two test CSVs — `bad_data.csv` (duplicate columns, special characters) and `clean_data.csv` (valid) — so you don't create them live
-- [ ] Presenter B: Have the PII detection example ready as a talking point (not live-code) to contrast hook vs. skill
-- [ ] Presenter C: Print or display the decision framework table for reference
-- [ ] All: Test the demo end-to-end at least once before the session
-- [ ] All: Share this lesson plan and the Hooks Report with attendees afterward
+- [ ] **Presenter A:** Prepare a whiteboard/slide showing the 5-step lifecycle diagram
+- [ ] **Presenter A:** Have the OpenClaw hooks docs page open for reference (docs.openclaw.ai/automation/hooks) — you may want to show the `command-logger` JSON output format as a quick visual
+- [ ] **Presenter B:** Set up a terminal with Claude Code and `jq` installed
+- [ ] **Presenter B:** Prepare `bad-handoff.csv` with the three contract violations (duplicate column name, mixed date formats, inconsistent casing)
+- [ ] **Presenter B:** Prepare `good-handoff.csv` that passes all contract checks cleanly
+- [ ] **Presenter B:** Have the hook script (`.claude/hooks/validate-handoff.sh`) ready and tested
+- [ ] **Presenter B:** Have `.claude/settings.json` ready to register the hook
+- [ ] **Presenter B:** Rehearse the A/B flow: run bad CSV without hook → show silent failure → register hook → run bad CSV again → show block → run good CSV → show pass
+- [ ] **Presenter C:** Print or display the decision framework table for reference
+- [ ] **Presenter C:** Have Team JAS's proposal summary handy (evaluation framework with prompt → model → scorecard pipeline) for the cross-project connection
+- [ ] **All:** Test the full A/B demo end-to-end at least once before the session
+- [ ] **All:** Share this lesson plan and the Hooks Report with attendees afterward
