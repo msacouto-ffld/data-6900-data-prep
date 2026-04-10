@@ -272,12 +272,17 @@ Then clarify what stays *out* of hooks:
 
 ### Talking Points (25:00–27:00) — How This Applies to Other Projects (2 min)
 
-Connect hooks to Team JAS's AI-Powered Evaluation Framework to show the concept isn't pipeline-specific:
+Connect hooks to the other two group's projects to show the concept isn't pipeline-specific:
 
 - **Team JAS** is building an evaluation framework that benchmarks Claude, Gemini, and ChatGPT across SQL and Python tasks. Their pipeline runs each model on a standardized prompt, then scores the output on correctness, performance, formatting, and AI Critic review. Where could hooks help?
   - **PreToolUse gate on prompt injection**: Before each model receives a task prompt, a hook could verify the prompt matches the canonical task bank — ensuring no accidental modifications or model-specific tweaks slip in. This protects the "one-shot, no revisions" evaluation guarantee.
   - **PostToolUse logging for reproducibility**: After each evaluation run, a hook could log the exact model, prompt, dataset variant, and timestamp to a structured audit file — making it trivial to reproduce any scorecard result. This is the same observability pattern from Part 1.
   - **Output schema validation**: After the evaluation harness produces a scorecard JSON, a hook could validate that every required field (correctness score, performance metrics, Critic review) is present before the scorecard is marked complete — catching partial runs before they contaminate the final report.
+
+- **Group C** s building a skillset that converts raw repository artifacts (JSON schemas, test catalogs, control libraries) into audit-ready compliance documentation. Their spec actually requires all input validation to happen deterministically before any LLM processing — that's a hook written into the spec itself. Where else do hooks fit?
+  - **Input format gate (PreToolUse)**: Before any file reaches the LLM, a hook validates it is present, is valid JSON, and contains the required top-level keys for its type. Without this, the LLM might attempt to parse an unsupported file format and produce a plausible-looking but wrong data dictionary. This is a hard block — not a suggestion.
+  - **Citation integrity gate (PostToolUse)**: After the LLM drafts an RCSA control narrative, a hook extracts every inline citation and checks each one against the artifact index. If any citation doesn't resolve to a real artifact, the hook blocks the output from being written at all — catching the hallucination case where the LLM invents a reference that sounds credible but doesn't exist.
+  - **Output completeness check (PostToolUse)**: Each skill run must produce multiple required files — a data dictionary plus a QA report, or control narratives plus a validation report. A hook verifies all required files exist, are non-empty, and contain expected section headers before the pipeline reports success. Same pattern as our pipeline's output schema check — just different file names.
 
 **Key point:** "The pattern is the same regardless of the project: find the trust boundary, write a deterministic check, make it a hook. Whether you're validating a cleaned CSV or an evaluation prompt, the architecture is identical."
 
