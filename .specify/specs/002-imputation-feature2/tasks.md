@@ -61,7 +61,7 @@ data-cleaning/
 
 Purpose: Create the Agent Skill directory structure and the SKILL.md entry point.
 
-- [ ] **T001** Create the `data-cleaning/` Skill directory with the full subdirectory structure shown above: `scripts/`, `tests/`, `tests/fixtures/`. Create empty placeholder files for all Python scripts, markdown reference files, and test files. Do not write implementation content yet — this task establishes the file tree only.
+- [ ] **T001** Create the `data-profiling-and-cleaning/` Skill directory with the full subdirectory structure shown above: `scripts/`, `tests/`, `tests/fixtures/`. Create empty placeholder files for all Python scripts, markdown reference files, and test files. Do not write implementation content yet — this task establishes the file tree only.
 
 - [ ] **T002** Write the SKILL.md YAML frontmatter and top-level instructions. The frontmatter must include `name: data-cleaning` and a `description` (max 1024 characters) that tells Claude when to trigger this Skill — specifically when a user requests data cleaning after Feature 1 profiling has completed. The body should contain: (1) a Purpose section summarizing the 7-step pipeline, (2) a Prerequisites section stating Feature 1 must have run, (3) a Workflow Overview section listing the pipeline stages (load → propose → review → execute → verify → report → jargon scan → deliver) with references to the appropriate script or markdown file for each stage, and (4) an Error Reference table matching the quickstart error table. Keep the body under 500 lines per Agent Skill best practices. Reference CATALOG.md, REPORT-TEMPLATE.md, and PROMPTS.md using relative links — do not inline their content.
 
