@@ -48,31 +48,48 @@ Then briefly cover the mechanics:
 **Transition:** "Now Presenter B will show you what this looks like in practice — with a real hook built for a real skill pipeline, and an A/B test so you can see the difference."
 
 ---
-
-## Part 2: Live A/B Demo — Contract Validation Hook (10 min)
+# Part 2: Live A/B Demo — Contract Enforcement in Agent Systems (10 min)
 **Presenter B**
 
-### Objective
-Learners see — side by side — what happens when a skill-to-skill handoff runs *without* a hook versus *with* a hook enforcing the contract.
+---
 
-### Setup Context (10:00–11:00) — Explain the Pipeline (1 min)
+## Objective
 
-"We're building a two-skill analytics pipeline:
+Learners see — side by side — what happens when a skill-to-skill handoff runs:
 
-- **Skill A** (Data Cleaning) takes a raw CSV, validates it, profiles it with ydata-profiling, and outputs a *cleaned CSV*.
-- **Skill B** (Feature Engineering) takes that cleaned CSV and engineers new features — one-hot encoding, date extraction, derived ratios, normalization.
+* **Without system-level enforcement (Skill only)**
+* **With deterministic enforcement (Skill + validation layer)**
 
-Skill B has a *handoff contract* — a set of hard gates the cleaned CSV must pass before feature engineering starts. The contract checks things like: no duplicate column names, no special characters in headers, consistent types per column, no empty files, and a cell count under 500,000.
+---
 
-For this demo, we don't need Skill A fully built. We have two scaffold CSVs: one that passes the contract, and one that violates it. The question is: **what catches the violation?**"
+# Setup Context (10:00–11:00) — Explain the Pipeline (1 min)
 
-### Demo Part A — Without the Hook (11:00–14:30) — "The Silent Failure" (3.5 min)
+"We’re building a two-skill analytics pipeline:
 
-**Narrate as you go:**
+* **Skill A (Data Cleaning)**: takes a raw CSV, validates and cleans it, and outputs a structured dataset
+* **Skill B (Feature Engineering)**: takes that dataset and creates new features — encoding categories, extracting dates, building ratios, normalizing values
 
-"Right now, Skill B's contract validation lives inside its prompt instructions. The SKILL.md tells the LLM to validate the input before proceeding. Let's see what happens when we hand it a bad CSV."
+Between them is a **handoff contract** — a set of rules the data must satisfy before Skill B runs.
 
-**Step 1 — Show the bad CSV** (`bad-handoff.csv`):
+Things like:
+
+* No duplicate column names
+* Consistent data types
+* Valid column formats
+* Reasonable dataset size
+
+For this demo, we’re skipping Skill A and using two files:
+
+* One that **violates the contract**
+* One that **passes it**
+
+The question is: *what actually enforces the contract?*"
+
+---
+
+# Demo Part A — Skill Only (11:00–14:30) — "The Silent Failure"
+
+### Step 1 — Show the Bad CSV (`bad-handoff.csv`)
 
 ```
 customer_id,revenue,revenue,signup_date,category
@@ -81,157 +98,169 @@ customer_id,revenue,revenue,signup_date,category
 103,300,300,,PREMIUM
 ```
 
-Point out the violations:
-- `revenue` column name is duplicated (violates validation step 7)
-- Mixed date formats and missing values (violates step 9 — inconsistent types)
-- Inconsistent casing in `category` (`Premium` vs `basic` vs `PREMIUM`) — Skill A should have standardized this
+Point out:
 
-**Step 2 — Run Skill B without the hook:**
+* Duplicate column name (`revenue`)
+* Mixed date formats
+* Missing values
+* Inconsistent category casing
 
-Show the LLM receiving the bad CSV. Because the validation is only in the prompt, the LLM may:
-- Skip validation entirely and jump to feature engineering
-- Notice *some* issues but proceed anyway ("I see duplicates but I'll rename them")
-- Miss the inconsistent types entirely
+Say:
 
-**Step 3 — Show the damage:**
+"This file clearly violates the contract. In a production pipeline, this should never reach feature engineering."
 
-The LLM produces a feature-engineered CSV with nonsense: one-hot encoding on the duplicated `revenue` column, date extraction that fails silently on the inconsistent formats, and no error report.
+---
 
-**Key line:** "The LLM didn't refuse. It didn't flag. It *tried to be helpful* — and that's the problem. Probabilistic validation means sometimes it catches issues, sometimes it doesn't. You'll never know which run was safe."
+### Step 2 — Run Skill B in Copilot Chat (Loose Version)
 
-### Demo Part B — With the Hook (14:30–18:30) — "The Hard Gate" (4 min)
+Open Copilot Chat and paste:
 
-**Step 1 — Show the hook script** (`.claude/hooks/validate-handoff.sh`):
+* Loose Skill B prompt
+* `bad-handoff.csv`
+
+Say:
+
+"Right now, we’re running the skill directly. There is **no system enforcing the contract** — only instructions inside the prompt."
+
+---
+
+### Step 3 — Observe Behavior
+
+The model may:
+
+* Rename duplicate columns
+* Attempt to fix inconsistencies
+* Proceed with feature engineering anyway
+
+Result:
+
+* Features are generated
+* Errors are not surfaced clearly
+* Data issues propagate silently
+
+---
+
+### Key Line
+
+"The model didn’t refuse. It didn’t block. It tried to be helpful — and that’s the problem.
+
+When validation lives inside the prompt, it becomes **probabilistic**. Sometimes it works. Sometimes it doesn’t. You don’t get guarantees."
+
+---
+
+# Demo Part B — Skill + Validation Layer (14:30–18:30) — "The Hard Gate"
+
+### Step 1 — Introduce the Validation Layer
+
+"Now we introduce a deterministic validation layer that runs **before Skill B executes**.
+
+In an agent system, this would be a guardrail or a PreToolUse hook.
+Here, we simulate it with a Python validation step."
+
+---
+
+### Step 2 — Run Validator on Bad CSV
+
+In VS Code terminal:
 
 ```bash
-#!/bin/bash
-# PreToolUse hook — validates Skill A → Skill B handoff contract
-# Runs BEFORE any tool call matching the feature engineering pipeline
-
-INPUT=$(cat)
-FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty')
-
-if [ -z "$FILE_PATH" ] || [ ! -f "$FILE_PATH" ]; then
-  echo '{"decision":"block","reason":"No file path provided or file not found."}'
-  exit 2
-fi
-
-# Run the contract validation checks
-python3 -c "
-import pandas as pd, sys, json
-
-path = '$FILE_PATH'
-errors = []
-
-# Step 2: Parse check
-try:
-    df = pd.read_csv(path)
-except Exception as e:
-    print(json.dumps({'decision':'block','reason':f'Not a valid CSV: {e}'}))
-    sys.exit(0)
-
-# Step 3: At least 1 column
-if len(df.columns) == 0:
-    errors.append('CSV has no columns.')
-
-# Step 4: At least 1 data row
-if len(df) == 0:
-    errors.append('CSV has headers but no data rows.')
-
-# Step 5: Cell count limit
-cells = df.shape[0] * df.shape[1]
-if cells > 500_000:
-    errors.append(f'Dataset exceeds 500k cell limit ({cells} cells).')
-
-# Step 7: Duplicate column names
-dupes = df.columns[df.columns.duplicated()].tolist()
-if dupes:
-    errors.append(f'Duplicate column names: {dupes}')
-
-# Step 8: Special characters in column names
-import re
-bad_cols = [c for c in df.columns if not re.match(r'^[a-zA-Z0-9_ ]+$', c)]
-if bad_cols:
-    errors.append(f'Special characters in column names: {bad_cols}')
-
-# Step 9: Consistent types per column
-for col in df.columns:
-    types = df[col].dropna().apply(type).unique()
-    if len(types) > 1:
-        errors.append(f\"Column '{col}' has mixed types: {[t.__name__ for t in types]}\")
-
-if errors:
-    print(json.dumps({'decision':'block','reason':'Handoff contract violations: ' + '; '.join(errors)}))
-else:
-    print(json.dumps({'decision':'allow','reason':'All handoff contract checks passed.'}))
-"
-
-RESULT=$?
-if echo "$INPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); sys.exit(0 if d.get('decision')=='allow' else 2)" 2>/dev/null; then
-  exit 0
-else
-  exit 2
-fi
+python3 scripts/validate_handoff.py data/bad-handoff.csv
 ```
 
-Walk through the key points:
-- This is a **PreToolUse** hook — it fires *before* the LLM's tool call executes
-- It reads the file path from the tool input JSON via stdin
-- It runs the same checks from the handoff contract (steps 2–9 from the validation rules table)
-- Exit code 2 = hard block. The LLM never proceeds.
-
-**Step 2 — Register the hook** in `.claude/settings.json`:
-
-```json
-{
-  "hooks": {
-    "PreToolUse": [{
-      "matcher": "Read|Execute",
-      "hooks": [{
-        "type": "command",
-        "command": ".claude/hooks/validate-handoff.sh"
-      }]
-    }]
-  }
-}
-```
-
-**Step 3 — Run the same bad CSV through Skill B again:**
-
-This time the hook fires, catches the duplicate column names and type inconsistencies, and **blocks the pipeline with a structured error message**:
+Show output:
 
 ```json
 {
   "decision": "block",
-  "reason": "Handoff contract violations: Duplicate column names: ['revenue']; Column 'signup_date' has mixed types"
+  "reason": "Handoff contract violations: Duplicate column names: ['revenue']; Column 'revenue' has mixed types (numeric + string)"
 }
 ```
 
-The LLM never gets to attempt feature engineering. The user sees exactly what's wrong and knows to go back to Skill A.
+Say:
 
-**Step 4 — Show the good CSV** (`good-handoff.csv`) passing through cleanly:
+"The pipeline stops here. Skill B never runs.
 
+We get a precise explanation of what’s wrong — and we know exactly where to fix it."
+
+---
+
+### Step 3 — Run Validator on Good CSV
+
+```bash
+python3 scripts/validate_handoff.py data/good-handoff.csv
 ```
-customer_id,revenue,signup_date,category
-101,500,2024-01-15,premium
-102,350,2024-02-20,basic
-103,300,2024-03-10,premium
+
+Show output:
+
+```json
+{
+  "decision": "allow",
+  "reason": "All handoff contract checks passed."
+}
 ```
 
-Hook returns `{"decision": "allow"}`, exit code 0, pipeline proceeds.
+Say:
 
-**Key line:** "Same pipeline, same LLM, same prompt. The only difference is one line in `settings.json`. The hook turned a *suggestion* into a *guarantee*."
+"Only now does the system allow the skill to run."
 
-### Closing the Demo (18:30–20:00) — Hook vs. Skill Boundary (1.5 min)
+---
 
-"So should everything be a hook? No. Here's the distinction:
+### Step 4 — Run Skill B in Copilot (Same Prompt as Part A)
 
-- The **contract validation** (duplicate columns, cell limits, type consistency) is a **hook** — it's pattern matching, it must happen every time, and failure should hard-block.
-- The **feature engineering decisions** inside Skill B (should we one-hot encode this column? is this ratio meaningful?) — those stay in the **skill/prompt**. They require LLM judgment, domain reasoning, and the persona validation loop.
+Paste:
 
-The rule of thumb: if a human would say 'this must *never* get through,' it's a hook. If a human would say 'use your judgment,' it's a skill."
+* Same loose Skill B prompt
+* `good-handoff.csv`
 
-**Transition:** "Presenter C will now give you the framework for making that decision systematically."
+Say:
+
+"Same skill. Same prompt. No changes."
+
+---
+
+### Step 5 — Observe Behavior
+
+Now:
+
+* Clean input
+* Consistent types
+* No structural issues
+
+Result:
+
+* Feature engineering behaves as expected
+* Outputs are coherent and reliable
+
+---
+
+### Key Line
+
+"Same model. Same prompt.
+
+The only difference is the validation layer.
+
+We’ve turned a suggestion into a guarantee."
+
+---
+
+# Closing Insight (18:30–20:00)
+
+"So should everything be enforced this way? No.
+
+* The **contract validation** — duplicate columns, type consistency, file structure — must be deterministic. That’s a hard gate.
+* The **feature engineering decisions** — what to create, how to transform — require judgment. That stays in the skill.
+
+The rule of thumb:
+
+If a human would say *'this must never get through'* → enforce it deterministically.
+If a human would say *'use your judgment'* → leave it to the model."
+
+---
+
+### Transition
+
+"Next, we’ll give you a framework for deciding what belongs in guardrails versus what belongs in the skill itself."
+
 
 ---
 
