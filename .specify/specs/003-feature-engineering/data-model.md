@@ -21,71 +21,108 @@ This document defines all data schemas used by the Skill B pipeline. Every field
 | File parseable | `pd.read_csv()` succeeds | Hard gate | "This file is not a valid CSV. Please check the file format and try again." |
 | Has columns | DataFrame has ≥1 column | Hard gate | "This CSV has no columns." |
 | Has rows | DataFrame has ≥1 data row | Hard gate | "This CSV contains headers but no data rows." |
+| Provenance | metadata JSON exists and `produced_by == "skill_a"` | Hard gate (when metadata present) | "Handoff contract violation: this CSV was not produced by Skill A. Please re-run through Skill A first." |
+| Contract version | metadata `handoff_contract_version == "1.0"` | Hard gate (when metadata present) | "Handoff contract violation: unsupported contract version '{version}'. Skill B requires version 1.0." |
 | No duplicate column names | `df.columns.duplicated().any()` is False | Hard gate | "Handoff contract violation: duplicate column names found — {list}. Skill A should have resolved this. Please re-run Skill A or fix manually." |
-| Clean column names | All columns match `r'^[a-zA-Z_][a-zA-Z0-9_]*$'` | Hard gate | "Handoff contract violation: column names contain special characters — {list}. Skill A should have standardized these." |
+| Column names snake_case + ASCII | All columns match `r'^[a-z][a-z0-9_]*$'` | Hard gate | "Handoff contract violation: column names not in snake_case — {list}. Skill A should have standardized these." |
+| No all-missing columns | `df.isnull().all().any()` is False | Hard gate | "Handoff contract violation: column(s) entirely empty — {list}. Skill A should have dropped these." |
+| No exact duplicate rows | `df.duplicated().any()` is False | Hard gate | "Handoff contract violation: exact duplicate rows found ({n} rows). Skill A should have removed these." |
 | Consistent types | For columns with dtype `object`: `pd.api.types.infer_dtype(col, skipna=True)` does not return "mixed" or "mixed-integer" | Hard gate | "Handoff contract violation: column '{col}' has mixed types. Skill A should have resolved type inconsistencies." |
 | Cell count ≤ 500,000 | rows × columns | Hard gate | "This dataset exceeds the feature engineering limit for Claude.ai ({n} cells). Reduce rows or columns." |
 | Cell count 100,000–500,000 | rows × columns | Warning | "This dataset is large ({n} cells). Feature engineering may be slow." |
-| Missing values | If missing values exist and no Skill A transformation report is available, warn | Soft gate | "Some columns have missing values and no Skill A transformation report was found to explain them. Proceeding — but results may be affected." |
+| Missing values | If missing values exist and no metadata is present, warn | Soft gate | "Some columns have missing values and no Skill A metadata was found to explain them. Proceeding — but results may be affected." |
 
 ---
 
-## DM-002 — Optional Inputs from Skill A
+## DM-002 — Three-Artifact Handoff from Skill A
 
-**These files are read if present, not required. Skill B works without them.**
+**Skill B expects three artifacts produced by Skill A. The CSV is required; the report and metadata are expected when input comes from Skill A. If only the CSV is uploaded (e.g., from a non-Skill-A source), Skill B falls back to CSV-only mode with reduced validation.**
 
-### profiling-data.json
+### Artifact 1: Cleaned CSV (required)
 
+**Filename pattern:** `{transform_run_id}-cleaned.csv`  
+**Format:** .csv  
+**Source:** Skill A's DM-111 output  
+See DM-001 for the validation rules Skill B applies.
+
+### Artifact 2: Transform Report (expected)
+
+**Filename pattern:** `{transform_run_id}-transform-report.md`  
+**Format:** .md  
+**Source:** Skill A's DM-109 output  
+**What Skill B reads from it:** The LLM reads the full markdown as context for feature proposals. It helps the LLM understand what cleaning was done — which columns were imputed, what outlier treatment was applied, what was rejected — so feature suggestions are smarter (e.g., cautious about deriving features from heavily imputed columns).
+
+**Not parsed programmatically** — the LLM reads it as natural language context.
+
+### Artifact 3: Transform Metadata JSON (expected)
+
+**Filename pattern:** `{transform_run_id}-transform-metadata.json`  
 **Format:** .json  
-**Source:** Skill A output (uploaded by user alongside cleaned CSV)  
-**What Skill B reads from it:**
+**Source:** Skill A's DM-110 output  
+**Schema (per Skill A's DM-110):**
 
-```json
+```python
 {
-    "pii_scan": [
+    "run_id": "string — transform-YYYYMMDD-HHMMSS-XXXX",
+    "source_profiling_run_id": "string — profile-YYYYMMDD-HHMMSS-XXXX",
+    "original_filename": "string",
+    "produced_by": "skill_a",
+    "pipeline_version": "string",
+    "row_count_before": "integer",
+    "row_count_after": "integer",
+    "column_count_before": "integer",
+    "column_count_after": "integer",
+    "columns": {
+        "{column_name}": {
+            "original_name": "string — pre-standardization name",
+            "type": "string — final dtype",
+            "transformations_applied": ["string — list of transformation types"]
+        }
+    },
+    "transformations": [
         {
-            "column_name": "string",
-            "pii_type": "string — direct_name | direct_contact | direct_identifier | indirect | financial",
-            "pii_category": "string — human-readable",
-            "detection_source": "string",
-            "confidence": "string — high | medium"
+            "step": "integer",
+            "type": "string",
+            "description": "string",
+            "affected_columns": ["string"],
+            "confidence_score": "integer"
         }
     ],
-    "profiling_statistics": {
-        "dataset": {
-            "n_rows": "integer",
-            "n_columns": "integer",
-            "types": {
-                "numeric": "integer",
-                "categorical": "integer",
-                "datetime": "integer"
-            }
-        },
-        "columns": {
-            "{column_name}": {
-                "type": "string",
-                "n_missing": "integer",
-                "pct_missing": "float",
-                "n_unique": "integer",
-                "mean": "float | null",
-                "std": "float | null",
-                "min": "float | null",
-                "max": "float | null"
-            }
+    "pii_warnings": [
+        {
+            "column_name": "string",
+            "pii_type": "string",
+            "pii_category": "string"
         }
-    }
+    ],
+    "skipped_transformations": [
+        {
+            "type": "string",
+            "description": "string — what was deferred and why",
+            "relevant_columns": ["string"]
+        }
+    ],
+    "handoff_contract_version": "1.0"
 }
 ```
 
-**Graceful handling:** If the file is present but its schema doesn't match (e.g., Skill A changed its format), Skill B logs a warning and proceeds without it — it does not crash.
+**What Skill B reads from it:**
+- `produced_by` → provenance check (must equal `"skill_a"`)
+- `handoff_contract_version` → must equal `"1.0"`
+- `pii_warnings` → carried directly into Skill B's PII flag list
+- `columns` → informs the LLM about transformation history per column
+- `skipped_transformations` → notes what Skill A deferred (could be relevant for feature engineering decisions)
+- `source_profiling_run_id` → traceability back to Feature 1
 
-### Skill A Transformation Report
+**Graceful handling:** If the metadata is present but its schema doesn't match (e.g., Skill A changes its format), Skill B logs a warning and falls back to CSV-only mode with the heuristic PII scan — it does not crash.
 
-**Format:** .md  
-**Source:** Skill A output (uploaded by user alongside cleaned CSV)  
-**What Skill B reads from it:** The LLM reads the full markdown as context for feature proposals. It helps the LLM understand what cleaning was done — which columns were imputed, what outlier treatment was applied, etc. This context can lead to smarter feature suggestions (e.g., cautious about deriving features from heavily imputed columns).
+### Fallback: CSV-only mode
 
-**Not parsed programmatically** — the LLM reads it as natural language context.
+If the user uploads only the CSV (no metadata, no report), Skill B:
+1. Logs a warning: "No Skill A metadata found — running in fallback mode."
+2. Skips provenance and contract version checks
+3. Runs the heuristic PII scan instead of reading metadata
+4. The LLM proceeds without Skill A context
 
 ---
 
@@ -105,8 +142,9 @@ This document defines all data schemas used by the Skill B pipeline. Every field
     "cell_count": "integer — row_count × column_count",
     "column_names": ["string — list of all column names"],
     "column_dtypes": {"column_name": "string — pandas dtype"},
-    "has_profiling_json": "boolean — whether profiling-data.json was found",
+    "has_metadata_json": "boolean — whether transform-metadata.json was found",
     "has_transformation_report": "boolean — whether Skill A report was found",
+    "metadata_provenance_valid": "boolean — produced_by == 'skill_a' and contract version == '1.0'",
     "pii_flags": [
         {
             "column_name": "string",
@@ -162,8 +200,8 @@ run_id = f"feature-{now.strftime('%Y%m%d-%H%M%S')}-{suffix}"
             "pii_flag": "string | null — PII type if flagged, null if clean"
         }
     ],
-    "skill_a_context": "string | null — Skill A transformation report content, if available",
-    "profiling_stats": "dict | null — profiling statistics from profiling-data.json, if available"
+    "skill_a_metadata": "dict | null — full transform-metadata.json content from Skill A, if available",
+    "skill_a_context": "string | null — Skill A transformation report content, if available"
 }
 ```
 
@@ -261,7 +299,8 @@ run_id = f"feature-{now.strftime('%Y%m%d-%H%M%S')}-{suffix}"
         "transformation_method": "string",
         "benchmark_comparison": "string",
         "implementation_hint": "string",
-        "confidence_score": "integer — 1 to 5",
+        "confidence_score": "integer — fixed value: 95, 82, 67, 50, or 35 (matches Skill A bands)",
+        "confidence_band": "string — High | Medium | Low",
         "confidence_justification": "string — e.g., 'All personas approved, no challenges'",
         "challenges_summary": "string — brief summary of any challenges raised and resolved",
         "grouping_key": "string | null",
@@ -274,13 +313,15 @@ run_id = f"feature-{now.strftime('%Y%m%d-%H%M%S')}-{suffix}"
 
 **Confidence score assignment logic (deterministic):**
 
-| Condition | Score |
-|-----------|-------|
-| 0 challenges raised across all 3 personas | 5 |
-| Challenges raised, all resolved, no lingering caveats | 4 |
-| Challenges raised, all resolved, with documented caveats | 3 |
-| Challenges raised, not all fully resolved | 2 |
-| Original rejected, alternative adopted | 1 |
+| Condition | Score | Band |
+|-----------|-------|------|
+| 0 challenges raised across all 3 personas | 95 | High |
+| Challenges raised, all resolved, no lingering caveats | 82 | High |
+| Challenges raised, all resolved, with documented caveats | 67 | Medium |
+| Challenges raised, not all fully resolved | 50 | Medium |
+| Original rejected, alternative adopted | 35 | Low |
+
+These fixed values match Skill A's DM-105 confidence bands exactly, ensuring stakeholders see a consistent scale across both skills.
 
 ---
 
@@ -351,7 +392,7 @@ Original columns in their original order. Engineered columns in execution order 
 **Input Shape**: {rows} rows × {cols} columns
 **Output Shape**: {rows} rows × {cols + new_cols} columns ({new_cols} features added)
 **Generated**: {timestamp}
-**Confidence Score Range**: {min_score}/5 – {max_score}/5
+**Confidence Score Range**: {min_score}/100 – {max_score}/100
 
 ---
 
@@ -365,7 +406,7 @@ how many rejected, any batches skipped and why.}
 {Either:
  - List of PII warnings per column, OR
  - "No potential PII was detected."
- Source noted: "PII flags from Skill A profiling data" or
+ Source noted: "PII flags from Skill A transform metadata" or
  "PII flags from Skill B heuristic scan"}
 
 ---
@@ -382,7 +423,7 @@ how many rejected, any batches skipped and why.}
   'order_date' preserved"}
 - **Benchmark:** {what you'd gain from this feature and what you'd
   lose without it}
-- **Confidence:** {score}/5 — {justification}
+- **Confidence:** {score}/100 ({band}) — {justification}
 - **Source columns:** {list}
 - **Method:** {transformation method}
 
