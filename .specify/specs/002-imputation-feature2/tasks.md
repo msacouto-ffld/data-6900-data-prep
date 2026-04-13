@@ -12,7 +12,7 @@
 The plan's `src/` directory structure is remapped to a Claude Agent Skill directory:
 
 ```text
-data-cleaning/
+data-profiling-and-cleaning/
 ├── SKILL.md                         # Main instructions + pipeline workflow
 ├── CATALOG.md                       # DM-103 transformation catalog reference
 ├── REPORT-TEMPLATE.md               # DM-109 report template reference
