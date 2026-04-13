@@ -5,7 +5,7 @@
 
 ## Summary
 
-Skill B takes the cleaned CSV produced by Skill A and engineers new features from it — derived columns (ratios, aggregations), categorical encoding (one-hot, label), date/time extraction (day of week, hour, month), basic text features (string length, word count), aggregate metrics (groupby + transform mapped back to rows), and normalization/scaling of numeric columns. Feature proposals are made by the LLM in 6 batches organized by transformation type, with each batch challenged by three LLM personas (Feature Relevance Skeptic, Statistical Reviewer, Domain Expert) before execution. Every approved feature receives a confidence score (1–5) based on persona loop outcomes. After execution, a Data Analyst persona verifies the output as a quality gate. The skill produces four outputs: a feature-engineered CSV (with `feat_` prefix on all new columns), a transformation report following the 3-part justification template with benchmark comparisons, a data dictionary documenting every engineered feature, and a mistake log recording all events. Skill B validates Skill A's output against a handoff contract before doing anything — if the input doesn't meet the contract, it stops and flags for human review. A PII re-check runs before feature engineering begins, reading PII flags from Skill A's profiling data if available or running a lightweight column-name heuristic if not.
+Skill B takes the cleaned CSV produced by Skill A and engineers new features from it — derived columns (ratios, aggregations), categorical encoding (one-hot, label), date/time extraction (day of week, hour, month), basic text features (string length, word count), aggregate metrics (groupby + transform mapped back to rows), and normalization/scaling of numeric columns. Feature proposals are made by the LLM in 6 batches organized by transformation type, with each batch challenged by three LLM personas (Feature Relevance Skeptic, Statistical Reviewer, Domain Expert) before execution. Every approved feature receives a confidence score (0–100, using fixed values matching Skill A's bands: 95, 82, 67, 50, 35) based on persona loop outcomes. After execution, a Data Analyst persona verifies the output as a quality gate. The skill produces four outputs: a feature-engineered CSV (with `feat_` prefix on all new columns), a transformation report following the 3-part justification template with benchmark comparisons, a data dictionary documenting every engineered feature, and a mistake log recording all events. Skill B validates Skill A's output against a handoff contract before doing anything — if the input doesn't meet the contract, it stops and flags for human review. Skill B reads PII flags from Skill A's transform-metadata.json (which carries them forward from Feature 1), and runs a lightweight column-name heuristic as a fallback if metadata is unavailable.
 
 ## Technical Context
 
@@ -35,7 +35,7 @@ Skill B takes the cleaned CSV produced by Skill A and engineers new features fro
 
 | Rule | Source | Status |
 |------|--------|--------|
-| LLM suggestions must pass through persona validation loop with confidence scores | Core Principles §II | ✅ Covered — 4 personas (3 challenge + 1 verification), confidence 1–5, batched by type |
+| LLM suggestions must pass through persona validation loop with confidence scores | Core Principles §II | ✅ Covered — 4 personas (3 challenge + 1 verification), confidence 0–100 with fixed values matching Skill A bands, batched by type |
 | Verification Ritual: Read → Run → Test → Commit | Core Principles §II | ✅ Covered — propose (Read) → execute (Run) → Data Analyst verify (Test) → deliver (Commit) |
 | Skill Handoff Contract: Skill B stops and flags if Skill A output has issues | Core Principles §II | ✅ Covered — handoff contract defined in RQ-001, validate-handoff contract |
 | Plain-language commitment: 3-part justification template, jargon scan, acronyms defined | Core Principles §III | ✅ Covered — FR-212, FR-223, FR-224, two-layer jargon scan |
@@ -45,7 +45,7 @@ Skill B takes the cleaned CSV produced by Skill A and engineers new features fro
 | Outputs: CSV + Markdown reports, downloadable from Claude.ai | Tech Stack §Output Format | ✅ Covered — FR-211, FR-212, FR-217, FR-218 |
 | Unique version/run ID per execution | Project Overview §FR | ✅ Covered — FR-219, format: feature-YYYYMMDD-HHMMSS-XXXX |
 | Reproducibility: same input + config = same output | Project Overview §FR | ✅ Covered — FR-220 |
-| PII detection: basic warning only in MVP | Security §PII | ✅ Covered — PII re-check added (spec gap resolved): reads Skill A JSON if available, heuristic scan if not |
+| PII detection: basic warning only in MVP | Security §PII | ✅ Covered — PII re-check added (spec gap resolved): reads PII flags from Skill A's transform-metadata.json (carried forward from Feature 1), heuristic scan if not |
 | Mistake Logging: each skill maintains structured log, no raw data | Core Principles §II | ✅ Covered — FR-221, FR-222, append-as-you-go implementation |
 | AI as Overconfident Intern: LLM code never executed directly | Core Principles §II | ✅ Covered — execution script uses pre-built code paths, LLM implementation_hint is advisory only |
 
@@ -55,19 +55,19 @@ Skill B takes the cleaned CSV produced by Skill A and engineers new features fro
 
 | Decision | Value | Source |
 |----------|-------|--------|
-| Handoff contract | Valid CSV + clean columns + consistent types + missing values resolved or justified. Transformation report and profiling-data.json optional. | RQ-001, User Interview Q1 |
+| Handoff contract | Three-artifact handoff (CSV + transform-report + transform-metadata.json) expected from Skill A. Validation checks provenance (`produced_by == "skill_a"`), contract version, snake_case ASCII column names, no all-missing columns, no exact duplicates, consistent types, and missing values resolved or justified. Fallback path if metadata absent. | RQ-001, User Interview Q1 |
 | Run ID format | `feature-YYYYMMDD-HHMMSS-XXXX` | User Interview Q2 |
-| PII re-check (with JSON) | Read PII flags from Skill A's profiling-data.json | User Interview Q3 |
-| PII re-check (without JSON) | Lightweight column-name heuristic only, no LLM value inspection | User Interview Q3 |
+| PII re-check (with metadata) | Read PII flags from Skill A's transform-metadata.json `pii_warnings` field | User Interview Q3 |
+| PII re-check (without metadata) | Lightweight column-name heuristic only, no LLM value inspection | User Interview Q3 |
 | Personas | 4 total: Feature Relevance Skeptic, Statistical Reviewer, Domain Expert (challenge loop, separate LLM calls) + Data Analyst (post-execution verification) | User Interview Q4 |
 | Transformation order | Date/time → text features → aggregations → derived columns → encoding → normalization | User Interview Q5 |
 | Aggregation grouping | LLM infers from data; personas challenge | User Interview Q6 |
 | File size limits | Input only: >500K cells reject, 100K–500K warn, <100K normal | User Interview Q7 |
-| Confidence scores | 1–5 ordinal: 5=strong consensus, 4=minor note, 3=caveats, 2=unresolved, 1=contested. Assigned deterministically by script based on persona outcomes. | User Interview Q8 |
+| Confidence scores | 0–100 with fixed values matching Skill A's bands: 95 (strong consensus), 82 (minor note), 67 (caveats), 50 (unresolved), 35 (contested). Assigned deterministically by script based on persona outcomes. | User Interview Q8 + Skill A reconciliation |
 | Jargon scan | Layer 1: script with ~20 term list. Layer 2: verification persona catches the rest. | User Interview Q9 |
 | Column naming | `feat_` prefix on all engineered columns, applied by script | User Interview Q10 |
 | Benchmark comparison | Plain-language justification per feature type — what it enables + what you'd lose without it | User Interview Q11 |
-| Skill B inputs | CSV required; transformation report + profiling-data.json optional | User Interview Q12 |
+| Skill B inputs | Three-artifact handoff expected: cleaned CSV + transform-report.md + transform-metadata.json. Fallback if metadata absent: CSV-only with own PII heuristic. | User Interview Q12 + Skill A reconciliation |
 | No-opportunity case | Fast-path for ≤2 columns or all identifiers; standard persona loop for everything else | User Interview Q13 |
 | Feature batching | 6 batches by transformation type, each through its own persona loop | User Interview Q7 (revised from A7) |
 | Session design | Designed for separate sessions from Skill A; works in same session too | Assumption A1 |
@@ -76,8 +76,8 @@ Skill B takes the cleaned CSV produced by Skill A and engineers new features fro
 | Batch rejection cap | Max 5 rejected features per batch before remaining are dropped without retry | Contracts revision |
 | Out-of-type proposals | Queued for correct batch, not dropped | Contracts revision |
 | Aggregate implementation | `groupby().agg()` + merge pattern for efficiency | RQ-006 |
-| Text features (new scope) | Basic: string length, word count, regex patterns. No NLP. | Synchrony brief analysis |
-| Aggregate features (new scope) | Group-level metrics mapped to rows via groupby + transform. Synchrony-style metrics supported. | Synchrony brief analysis |
+| Text features (new scope) | Basic: string length, word count, regex patterns. No NLP. | Client brief analysis |
+| Aggregate features (new scope) | Group-level metrics mapped to rows via groupby + transform. Industry-standard financial/retail KPIs supported. | Client brief analysis |
 
 ## Project Structure
 
@@ -234,7 +234,7 @@ THEN AND ONLY THEN:
 |------|-------|---------------|
 | Handoff contract — Skill A must produce output meeting the contract defined in RQ-001 | Xiao + Margarida | Review and approve contract; update Skill A spec if needed |
 | Synthetic data generation for testing | Team / Margarida | Coordinate as team-level deliverable, not Skill B's responsibility |
-| AI vs deterministic rules recommendation | Team / Margarida | Cross-cutting deliverable from Synchrony brief; both skill owners contribute findings |
+| AI vs deterministic rules recommendation | Team / Margarida | Cross-cutting deliverable from client brief; both skill owners contribute findings |
 | Constitution amendment: pip install permitted | Margarida | Formalize the amendment Xiao's chat established |
 | ydata-profiling in approved dependency list | Margarida | Resolve inconsistency: constitution lists it, project overview does not |
 | Source code repo structure | Team | Confirm conventions for agents/, prompts/, skills/ folders |
@@ -246,13 +246,13 @@ No constitution violations identified. No justifications required.
 One spec gap was identified and resolved:
 | Gap | Resolution |
 |-----|-----------|
-| Skill B spec did not include PII re-check | Added as new scope: reads Skill A JSON if available, runs column-name heuristic if not. To be added to spec in next revision. |
+| Skill B spec did not include PII re-check | Added as new scope: reads PII flags from Skill A's transform-metadata.json if available, runs column-name heuristic if not. To be added to spec in next revision. |
 
-Two new scope items added from Synchrony brief analysis:
+Two new scope items added from client brief analysis:
 | Addition | Resolution |
 |----------|-----------|
 | Basic text feature extraction (string length, word count, regex) | Added to Batch 2 in proposal/execution pipeline. Within pandas capabilities. |
-| Aggregate metrics as row-level columns (Synchrony-style) | Added to Batch 3. Uses groupby().agg() + merge. Standard pandas pattern. |
+| Aggregate metrics as row-level columns (industry-standard financial/retail KPIs) | Added to Batch 3. Uses groupby().agg() + merge. Standard pandas pattern. |
 
 ---
 
@@ -293,4 +293,4 @@ Two new scope items added from Synchrony brief analysis:
 
 ---
 
-**Governed by**: [constitution.md](./constitution.md) v2.1.0
+**Governed by**: [constitution.md](./constitution.md) v1.1.0
