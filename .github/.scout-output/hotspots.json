@@ -1,0 +1,303 @@
+{
+  "root": "/Users/margarida/Documents/Fairfield University/01. MSBA/02. Spring 26/DATA 6900/data6900-auto-data-prep/.github/skills/data-profiling-and-cleaning",
+  "total_files": 28,
+  "thresholds": {
+    "loc": 500,
+    "functions": 20,
+    "imports": 15,
+    "fan_in": 5,
+    "fan_out": 8
+  },
+  "hotspots": [
+    {
+      "file": "scripts/execute_transformations.py",
+      "loc": 376,
+      "classes": 1,
+      "functions": 5,
+      "imports": 17,
+      "fan_in": 0,
+      "fan_out": 0,
+      "reasons": [
+        "many imports (17)"
+      ]
+    },
+    {
+      "file": "scripts/orchestrator.py",
+      "loc": 585,
+      "classes": 1,
+      "functions": 8,
+      "imports": 13,
+      "fan_in": 0,
+      "fan_out": 0,
+      "reasons": [
+        "high LOC (585)"
+      ]
+    },
+    {
+      "file": "scripts/orchestrator_f2.py",
+      "loc": 929,
+      "classes": 1,
+      "functions": 8,
+      "imports": 14,
+      "fan_in": 0,
+      "fan_out": 0,
+      "reasons": [
+        "high LOC (929)"
+      ]
+    }
+  ],
+  "all_metrics": [
+    {
+      "file": "scripts/catalog.py",
+      "loc": 146,
+      "classes": 0,
+      "functions": 5,
+      "imports": 2,
+      "fan_in": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "scripts/deliver_cleaning_outputs.py",
+      "loc": 262,
+      "classes": 0,
+      "functions": 3,
+      "imports": 7,
+      "fan_in": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "scripts/deliver_outputs.py",
+      "loc": 185,
+      "classes": 0,
+      "functions": 4,
+      "imports": 6,
+      "fan_in": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "scripts/detect_quality_issues.py",
+      "loc": 196,
+      "classes": 1,
+      "functions": 1,
+      "imports": 6,
+      "fan_in": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "scripts/execute_transformations.py",
+      "loc": 376,
+      "classes": 1,
+      "functions": 5,
+      "imports": 17,
+      "fan_in": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "scripts/generate_charts.py",
+      "loc": 279,
+      "classes": 0,
+      "functions": 6,
+      "imports": 8,
+      "fan_in": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "scripts/high_impact.py",
+      "loc": 206,
+      "classes": 0,
+      "functions": 2,
+      "imports": 3,
+      "fan_in": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "scripts/install_dependencies.py",
+      "loc": 53,
+      "classes": 0,
+      "functions": 1,
+      "imports": 4,
+      "fan_in": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "scripts/load_inputs.py",
+      "loc": 158,
+      "classes": 1,
+      "functions": 2,
+      "imports": 10,
+      "fan_in": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "scripts/metrics.py",
+      "loc": 118,
+      "classes": 0,
+      "functions": 2,
+      "imports": 4,
+      "fan_in": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "scripts/mistake_log.py",
+      "loc": 137,
+      "classes": 0,
+      "functions": 4,
+      "imports": 6,
+      "fan_in": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "scripts/orchestrator.py",
+      "loc": 585,
+      "classes": 1,
+      "functions": 8,
+      "imports": 13,
+      "fan_in": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "scripts/orchestrator_f2.py",
+      "loc": 929,
+      "classes": 1,
+      "functions": 8,
+      "imports": 14,
+      "fan_in": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "scripts/run_id.py",
+      "loc": 39,
+      "classes": 0,
+      "functions": 1,
+      "imports": 3,
+      "fan_in": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "scripts/run_profiling.py",
+      "loc": 282,
+      "classes": 1,
+      "functions": 7,
+      "imports": 10,
+      "fan_in": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "scripts/scan_jargon.py",
+      "loc": 141,
+      "classes": 0,
+      "functions": 3,
+      "imports": 3,
+      "fan_in": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "scripts/scan_pii.py",
+      "loc": 262,
+      "classes": 0,
+      "functions": 6,
+      "imports": 6,
+      "fan_in": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "scripts/schemas.py",
+      "loc": 306,
+      "classes": 0,
+      "functions": 7,
+      "imports": 3,
+      "fan_in": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "scripts/schemas_f2.py",
+      "loc": 387,
+      "classes": 0,
+      "functions": 9,
+      "imports": 2,
+      "fan_in": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "scripts/step_1_column_names.py",
+      "loc": 132,
+      "classes": 0,
+      "functions": 4,
+      "imports": 5,
+      "fan_in": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "scripts/step_2_drop_missing.py",
+      "loc": 88,
+      "classes": 0,
+      "functions": 1,
+      "imports": 4,
+      "fan_in": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "scripts/step_3_type_coercion.py",
+      "loc": 158,
+      "classes": 0,
+      "functions": 7,
+      "imports": 5,
+      "fan_in": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "scripts/step_4_invalid_categories.py",
+      "loc": 125,
+      "classes": 0,
+      "functions": 4,
+      "imports": 4,
+      "fan_in": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "scripts/step_5_imputation.py",
+      "loc": 198,
+      "classes": 0,
+      "functions": 3,
+      "imports": 5,
+      "fan_in": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "scripts/step_6_deduplication.py",
+      "loc": 126,
+      "classes": 0,
+      "functions": 3,
+      "imports": 4,
+      "fan_in": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "scripts/step_7_outliers.py",
+      "loc": 120,
+      "classes": 0,
+      "functions": 2,
+      "imports": 4,
+      "fan_in": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "scripts/thresholds.py",
+      "loc": 57,
+      "classes": 0,
+      "functions": 1,
+      "imports": 2,
+      "fan_in": 0,
+      "fan_out": 0
+    },
+    {
+      "file": "scripts/validate_input.py",
+      "loc": 174,
+      "classes": 1,
+      "functions": 1,
+      "imports": 7,
+      "fan_in": 0,
+      "fan_out": 0
+    }
+  ]
+}

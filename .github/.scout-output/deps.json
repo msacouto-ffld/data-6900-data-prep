@@ -1,0 +1,717 @@
+{
+  "root": "/Users/margarida/Documents/Fairfield University/01. MSBA/02. Spring 26/DATA 6900/data6900-auto-data-prep/.github/skills/data-profiling-and-cleaning",
+  "total_files": 28,
+  "total_edges": 166,
+  "edges": [
+    {
+      "from": "scripts/catalog.py",
+      "to": "__future__"
+    },
+    {
+      "from": "scripts/catalog.py",
+      "to": "typing"
+    },
+    {
+      "from": "scripts/deliver_cleaning_outputs.py",
+      "to": "__future__"
+    },
+    {
+      "from": "scripts/deliver_cleaning_outputs.py",
+      "to": "copy"
+    },
+    {
+      "from": "scripts/deliver_cleaning_outputs.py",
+      "to": "json"
+    },
+    {
+      "from": "scripts/deliver_cleaning_outputs.py",
+      "to": "math"
+    },
+    {
+      "from": "scripts/deliver_cleaning_outputs.py",
+      "to": "os"
+    },
+    {
+      "from": "scripts/deliver_cleaning_outputs.py",
+      "to": "pandas"
+    },
+    {
+      "from": "scripts/deliver_cleaning_outputs.py",
+      "to": "typing"
+    },
+    {
+      "from": "scripts/deliver_outputs.py",
+      "to": "__future__"
+    },
+    {
+      "from": "scripts/deliver_outputs.py",
+      "to": "copy"
+    },
+    {
+      "from": "scripts/deliver_outputs.py",
+      "to": "json"
+    },
+    {
+      "from": "scripts/deliver_outputs.py",
+      "to": "math"
+    },
+    {
+      "from": "scripts/deliver_outputs.py",
+      "to": "os"
+    },
+    {
+      "from": "scripts/deliver_outputs.py",
+      "to": "typing"
+    },
+    {
+      "from": "scripts/detect_quality_issues.py",
+      "to": "__future__"
+    },
+    {
+      "from": "scripts/detect_quality_issues.py",
+      "to": "pandas"
+    },
+    {
+      "from": "scripts/detect_quality_issues.py",
+      "to": "re"
+    },
+    {
+      "from": "scripts/detect_quality_issues.py",
+      "to": "sys"
+    },
+    {
+      "from": "scripts/detect_quality_issues.py",
+      "to": "typing"
+    },
+    {
+      "from": "scripts/detect_quality_issues.py",
+      "to": "validate_input"
+    },
+    {
+      "from": "scripts/execute_transformations.py",
+      "to": "__future__"
+    },
+    {
+      "from": "scripts/execute_transformations.py",
+      "to": "catalog"
+    },
+    {
+      "from": "scripts/execute_transformations.py",
+      "to": "high_impact"
+    },
+    {
+      "from": "scripts/execute_transformations.py",
+      "to": "metrics"
+    },
+    {
+      "from": "scripts/execute_transformations.py",
+      "to": "mistake_log"
+    },
+    {
+      "from": "scripts/execute_transformations.py",
+      "to": "numpy"
+    },
+    {
+      "from": "scripts/execute_transformations.py",
+      "to": "os"
+    },
+    {
+      "from": "scripts/execute_transformations.py",
+      "to": "pandas"
+    },
+    {
+      "from": "scripts/execute_transformations.py",
+      "to": "step_1_column_names"
+    },
+    {
+      "from": "scripts/execute_transformations.py",
+      "to": "step_2_drop_missing"
+    },
+    {
+      "from": "scripts/execute_transformations.py",
+      "to": "step_3_type_coercion"
+    },
+    {
+      "from": "scripts/execute_transformations.py",
+      "to": "step_4_invalid_categories"
+    },
+    {
+      "from": "scripts/execute_transformations.py",
+      "to": "step_5_imputation"
+    },
+    {
+      "from": "scripts/execute_transformations.py",
+      "to": "step_6_deduplication"
+    },
+    {
+      "from": "scripts/execute_transformations.py",
+      "to": "step_7_outliers"
+    },
+    {
+      "from": "scripts/execute_transformations.py",
+      "to": "typing"
+    },
+    {
+      "from": "scripts/generate_charts.py",
+      "to": "__future__"
+    },
+    {
+      "from": "scripts/generate_charts.py",
+      "to": "matplotlib"
+    },
+    {
+      "from": "scripts/generate_charts.py",
+      "to": "matplotlib.pyplot"
+    },
+    {
+      "from": "scripts/generate_charts.py",
+      "to": "os"
+    },
+    {
+      "from": "scripts/generate_charts.py",
+      "to": "pandas"
+    },
+    {
+      "from": "scripts/generate_charts.py",
+      "to": "sys"
+    },
+    {
+      "from": "scripts/generate_charts.py",
+      "to": "typing"
+    },
+    {
+      "from": "scripts/generate_charts.py",
+      "to": "validate_input"
+    },
+    {
+      "from": "scripts/high_impact.py",
+      "to": "__future__"
+    },
+    {
+      "from": "scripts/high_impact.py",
+      "to": "thresholds"
+    },
+    {
+      "from": "scripts/high_impact.py",
+      "to": "typing"
+    },
+    {
+      "from": "scripts/install_dependencies.py",
+      "to": "__future__"
+    },
+    {
+      "from": "scripts/install_dependencies.py",
+      "to": "subprocess"
+    },
+    {
+      "from": "scripts/install_dependencies.py",
+      "to": "sys"
+    },
+    {
+      "from": "scripts/install_dependencies.py",
+      "to": "ydata_profiling"
+    },
+    {
+      "from": "scripts/load_inputs.py",
+      "to": "__future__"
+    },
+    {
+      "from": "scripts/load_inputs.py",
+      "to": "datetime"
+    },
+    {
+      "from": "scripts/load_inputs.py",
+      "to": "glob"
+    },
+    {
+      "from": "scripts/load_inputs.py",
+      "to": "json"
+    },
+    {
+      "from": "scripts/load_inputs.py",
+      "to": "os"
+    },
+    {
+      "from": "scripts/load_inputs.py",
+      "to": "pandas"
+    },
+    {
+      "from": "scripts/load_inputs.py",
+      "to": "run_id"
+    },
+    {
+      "from": "scripts/load_inputs.py",
+      "to": "schemas_f2"
+    },
+    {
+      "from": "scripts/load_inputs.py",
+      "to": "sys"
+    },
+    {
+      "from": "scripts/load_inputs.py",
+      "to": "typing"
+    },
+    {
+      "from": "scripts/metrics.py",
+      "to": "__future__"
+    },
+    {
+      "from": "scripts/metrics.py",
+      "to": "numpy"
+    },
+    {
+      "from": "scripts/metrics.py",
+      "to": "pandas"
+    },
+    {
+      "from": "scripts/metrics.py",
+      "to": "typing"
+    },
+    {
+      "from": "scripts/mistake_log.py",
+      "to": "__future__"
+    },
+    {
+      "from": "scripts/mistake_log.py",
+      "to": "datetime"
+    },
+    {
+      "from": "scripts/mistake_log.py",
+      "to": "json"
+    },
+    {
+      "from": "scripts/mistake_log.py",
+      "to": "os"
+    },
+    {
+      "from": "scripts/mistake_log.py",
+      "to": "schemas_f2"
+    },
+    {
+      "from": "scripts/mistake_log.py",
+      "to": "typing"
+    },
+    {
+      "from": "scripts/orchestrator.py",
+      "to": "__future__"
+    },
+    {
+      "from": "scripts/orchestrator.py",
+      "to": "deliver_outputs"
+    },
+    {
+      "from": "scripts/orchestrator.py",
+      "to": "detect_quality_issues"
+    },
+    {
+      "from": "scripts/orchestrator.py",
+      "to": "generate_charts"
+    },
+    {
+      "from": "scripts/orchestrator.py",
+      "to": "install_dependencies"
+    },
+    {
+      "from": "scripts/orchestrator.py",
+      "to": "json"
+    },
+    {
+      "from": "scripts/orchestrator.py",
+      "to": "os"
+    },
+    {
+      "from": "scripts/orchestrator.py",
+      "to": "re"
+    },
+    {
+      "from": "scripts/orchestrator.py",
+      "to": "run_profiling"
+    },
+    {
+      "from": "scripts/orchestrator.py",
+      "to": "scan_pii"
+    },
+    {
+      "from": "scripts/orchestrator.py",
+      "to": "sys"
+    },
+    {
+      "from": "scripts/orchestrator.py",
+      "to": "typing"
+    },
+    {
+      "from": "scripts/orchestrator.py",
+      "to": "validate_input"
+    },
+    {
+      "from": "scripts/orchestrator_f2.py",
+      "to": "__future__"
+    },
+    {
+      "from": "scripts/orchestrator_f2.py",
+      "to": "catalog"
+    },
+    {
+      "from": "scripts/orchestrator_f2.py",
+      "to": "copy"
+    },
+    {
+      "from": "scripts/orchestrator_f2.py",
+      "to": "deliver_cleaning_outputs"
+    },
+    {
+      "from": "scripts/orchestrator_f2.py",
+      "to": "execute_transformations"
+    },
+    {
+      "from": "scripts/orchestrator_f2.py",
+      "to": "load_inputs"
+    },
+    {
+      "from": "scripts/orchestrator_f2.py",
+      "to": "metrics"
+    },
+    {
+      "from": "scripts/orchestrator_f2.py",
+      "to": "mistake_log"
+    },
+    {
+      "from": "scripts/orchestrator_f2.py",
+      "to": "os"
+    },
+    {
+      "from": "scripts/orchestrator_f2.py",
+      "to": "pandas"
+    },
+    {
+      "from": "scripts/orchestrator_f2.py",
+      "to": "scan_jargon"
+    },
+    {
+      "from": "scripts/orchestrator_f2.py",
+      "to": "schemas_f2"
+    },
+    {
+      "from": "scripts/orchestrator_f2.py",
+      "to": "sys"
+    },
+    {
+      "from": "scripts/orchestrator_f2.py",
+      "to": "typing"
+    },
+    {
+      "from": "scripts/run_id.py",
+      "to": "__future__"
+    },
+    {
+      "from": "scripts/run_id.py",
+      "to": "datetime"
+    },
+    {
+      "from": "scripts/run_id.py",
+      "to": "secrets"
+    },
+    {
+      "from": "scripts/run_profiling.py",
+      "to": "__future__"
+    },
+    {
+      "from": "scripts/run_profiling.py",
+      "to": "detect_quality_issues"
+    },
+    {
+      "from": "scripts/run_profiling.py",
+      "to": "json"
+    },
+    {
+      "from": "scripts/run_profiling.py",
+      "to": "os"
+    },
+    {
+      "from": "scripts/run_profiling.py",
+      "to": "pandas"
+    },
+    {
+      "from": "scripts/run_profiling.py",
+      "to": "schemas"
+    },
+    {
+      "from": "scripts/run_profiling.py",
+      "to": "sys"
+    },
+    {
+      "from": "scripts/run_profiling.py",
+      "to": "typing"
+    },
+    {
+      "from": "scripts/run_profiling.py",
+      "to": "validate_input"
+    },
+    {
+      "from": "scripts/run_profiling.py",
+      "to": "ydata_profiling"
+    },
+    {
+      "from": "scripts/scan_jargon.py",
+      "to": "__future__"
+    },
+    {
+      "from": "scripts/scan_jargon.py",
+      "to": "re"
+    },
+    {
+      "from": "scripts/scan_jargon.py",
+      "to": "typing"
+    },
+    {
+      "from": "scripts/scan_pii.py",
+      "to": "__future__"
+    },
+    {
+      "from": "scripts/scan_pii.py",
+      "to": "pandas"
+    },
+    {
+      "from": "scripts/scan_pii.py",
+      "to": "re"
+    },
+    {
+      "from": "scripts/scan_pii.py",
+      "to": "sys"
+    },
+    {
+      "from": "scripts/scan_pii.py",
+      "to": "typing"
+    },
+    {
+      "from": "scripts/scan_pii.py",
+      "to": "validate_input"
+    },
+    {
+      "from": "scripts/schemas.py",
+      "to": "__future__"
+    },
+    {
+      "from": "scripts/schemas.py",
+      "to": "run_id"
+    },
+    {
+      "from": "scripts/schemas.py",
+      "to": "typing"
+    },
+    {
+      "from": "scripts/schemas_f2.py",
+      "to": "__future__"
+    },
+    {
+      "from": "scripts/schemas_f2.py",
+      "to": "typing"
+    },
+    {
+      "from": "scripts/step_1_column_names.py",
+      "to": "__future__"
+    },
+    {
+      "from": "scripts/step_1_column_names.py",
+      "to": "numpy"
+    },
+    {
+      "from": "scripts/step_1_column_names.py",
+      "to": "pandas"
+    },
+    {
+      "from": "scripts/step_1_column_names.py",
+      "to": "re"
+    },
+    {
+      "from": "scripts/step_1_column_names.py",
+      "to": "typing"
+    },
+    {
+      "from": "scripts/step_2_drop_missing.py",
+      "to": "__future__"
+    },
+    {
+      "from": "scripts/step_2_drop_missing.py",
+      "to": "numpy"
+    },
+    {
+      "from": "scripts/step_2_drop_missing.py",
+      "to": "pandas"
+    },
+    {
+      "from": "scripts/step_2_drop_missing.py",
+      "to": "typing"
+    },
+    {
+      "from": "scripts/step_3_type_coercion.py",
+      "to": "__future__"
+    },
+    {
+      "from": "scripts/step_3_type_coercion.py",
+      "to": "numpy"
+    },
+    {
+      "from": "scripts/step_3_type_coercion.py",
+      "to": "pandas"
+    },
+    {
+      "from": "scripts/step_3_type_coercion.py",
+      "to": "re"
+    },
+    {
+      "from": "scripts/step_3_type_coercion.py",
+      "to": "typing"
+    },
+    {
+      "from": "scripts/step_4_invalid_categories.py",
+      "to": "__future__"
+    },
+    {
+      "from": "scripts/step_4_invalid_categories.py",
+      "to": "numpy"
+    },
+    {
+      "from": "scripts/step_4_invalid_categories.py",
+      "to": "pandas"
+    },
+    {
+      "from": "scripts/step_4_invalid_categories.py",
+      "to": "typing"
+    },
+    {
+      "from": "scripts/step_5_imputation.py",
+      "to": "__future__"
+    },
+    {
+      "from": "scripts/step_5_imputation.py",
+      "to": "numpy"
+    },
+    {
+      "from": "scripts/step_5_imputation.py",
+      "to": "pandas"
+    },
+    {
+      "from": "scripts/step_5_imputation.py",
+      "to": "sklearn.impute"
+    },
+    {
+      "from": "scripts/step_5_imputation.py",
+      "to": "typing"
+    },
+    {
+      "from": "scripts/step_6_deduplication.py",
+      "to": "__future__"
+    },
+    {
+      "from": "scripts/step_6_deduplication.py",
+      "to": "numpy"
+    },
+    {
+      "from": "scripts/step_6_deduplication.py",
+      "to": "pandas"
+    },
+    {
+      "from": "scripts/step_6_deduplication.py",
+      "to": "typing"
+    },
+    {
+      "from": "scripts/step_7_outliers.py",
+      "to": "__future__"
+    },
+    {
+      "from": "scripts/step_7_outliers.py",
+      "to": "numpy"
+    },
+    {
+      "from": "scripts/step_7_outliers.py",
+      "to": "pandas"
+    },
+    {
+      "from": "scripts/step_7_outliers.py",
+      "to": "typing"
+    },
+    {
+      "from": "scripts/thresholds.py",
+      "to": "__future__"
+    },
+    {
+      "from": "scripts/thresholds.py",
+      "to": "typing"
+    },
+    {
+      "from": "scripts/validate_input.py",
+      "to": "__future__"
+    },
+    {
+      "from": "scripts/validate_input.py",
+      "to": "datetime"
+    },
+    {
+      "from": "scripts/validate_input.py",
+      "to": "os"
+    },
+    {
+      "from": "scripts/validate_input.py",
+      "to": "pandas"
+    },
+    {
+      "from": "scripts/validate_input.py",
+      "to": "run_id"
+    },
+    {
+      "from": "scripts/validate_input.py",
+      "to": "sys"
+    },
+    {
+      "from": "scripts/validate_input.py",
+      "to": "typing"
+    }
+  ],
+  "external_dependencies": [
+    "__future__",
+    "catalog",
+    "copy",
+    "datetime",
+    "deliver_cleaning_outputs",
+    "deliver_outputs",
+    "detect_quality_issues",
+    "execute_transformations",
+    "generate_charts",
+    "glob",
+    "high_impact",
+    "install_dependencies",
+    "json",
+    "load_inputs",
+    "math",
+    "matplotlib",
+    "matplotlib.pyplot",
+    "metrics",
+    "mistake_log",
+    "numpy",
+    "os",
+    "pandas",
+    "re",
+    "run_id",
+    "run_profiling",
+    "scan_jargon",
+    "scan_pii",
+    "schemas",
+    "schemas_f2",
+    "secrets",
+    "sklearn.impute",
+    "step_1_column_names",
+    "step_2_drop_missing",
+    "step_3_type_coercion",
+    "step_4_invalid_categories",
+    "step_5_imputation",
+    "step_6_deduplication",
+    "step_7_outliers",
+    "subprocess",
+    "sys",
+    "thresholds",
+    "typing",
+    "validate_input",
+    "ydata_profiling"
+  ]
+}

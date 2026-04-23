@@ -1,0 +1,1145 @@
+{
+  "file": "../data-profiling-and-cleaning/scripts/orchestrator_f2.py",
+  "classes": [
+    {
+      "name": "CleaningPipelineError",
+      "bases": [
+        "Exception"
+      ],
+      "methods": [],
+      "lineno": 50
+    }
+  ],
+  "functions": [
+    {
+      "name": "_stub_propose",
+      "args": [
+        "profiling_data",
+        "nl_report",
+        "run_metadata",
+        "rejection_context"
+      ],
+      "lineno": 59,
+      "is_async": false
+    },
+    {
+      "name": "_stub_review",
+      "args": [
+        "transformation_plan",
+        "profiling_data"
+      ],
+      "lineno": 211,
+      "is_async": false
+    },
+    {
+      "name": "_stub_verify_output",
+      "args": [
+        "profiling_data",
+        "step_results",
+        "approved_plan",
+        "final_metrics",
+        "high_impact_flags"
+      ],
+      "lineno": 248,
+      "is_async": false
+    },
+    {
+      "name": "_stub_generate_report",
+      "args": [
+        "step_results",
+        "approved_plan",
+        "review_outputs",
+        "verification_result",
+        "run_metadata",
+        "profiling_data",
+        "high_impact_flags",
+        "mistake_log_counts"
+      ],
+      "lineno": 269,
+      "is_async": false
+    },
+    {
+      "name": "_stub_light_verification",
+      "args": [
+        "profiling_data",
+        "nl_report",
+        "raw_df_shape"
+      ],
+      "lineno": 553,
+      "is_async": false
+    },
+    {
+      "name": "_merge_to_approved_plan",
+      "args": [
+        "transformation_plan",
+        "review_output"
+      ],
+      "lineno": 574,
+      "is_async": false
+    },
+    {
+      "name": "run_cleaning_pipeline",
+      "args": [
+        "search_dir",
+        "llm_hooks",
+        "output_dir"
+      ],
+      "lineno": 649,
+      "is_async": false
+    },
+    {
+      "name": "_execute_standard_path",
+      "args": [
+        "transformation_plan",
+        "raw_df",
+        "run_metadata",
+        "mistake_log",
+        "hooks",
+        "output_dir",
+        "profiling_data"
+      ],
+      "lineno": 867,
+      "is_async": false
+    }
+  ],
+  "imports": [
+    {
+      "module": "__future__",
+      "name": "annotations",
+      "alias": null,
+      "kind": "from"
+    },
+    {
+      "module": "copy",
+      "alias": null,
+      "kind": "import"
+    },
+    {
+      "module": "typing",
+      "name": "Any",
+      "alias": null,
+      "kind": "from"
+    },
+    {
+      "module": "typing",
+      "name": "Callable",
+      "alias": null,
+      "kind": "from"
+    },
+    {
+      "module": "typing",
+      "name": "Dict",
+      "alias": null,
+      "kind": "from"
+    },
+    {
+      "module": "typing",
+      "name": "List",
+      "alias": null,
+      "kind": "from"
+    },
+    {
+      "module": "typing",
+      "name": "Optional",
+      "alias": null,
+      "kind": "from"
+    },
+    {
+      "module": "pandas",
+      "alias": "pd",
+      "kind": "import"
+    },
+    {
+      "module": "catalog",
+      "name": "get_step_name",
+      "alias": null,
+      "kind": "from"
+    },
+    {
+      "module": "deliver_cleaning_outputs",
+      "name": "deliver_cleaning_outputs",
+      "alias": null,
+      "kind": "from"
+    },
+    {
+      "module": "execute_transformations",
+      "name": "ExecutionError",
+      "alias": null,
+      "kind": "from"
+    },
+    {
+      "module": "execute_transformations",
+      "name": "execute_transformations",
+      "alias": null,
+      "kind": "from"
+    },
+    {
+      "module": "load_inputs",
+      "name": "LoadInputsError",
+      "alias": null,
+      "kind": "from"
+    },
+    {
+      "module": "load_inputs",
+      "name": "load_feature1_outputs",
+      "alias": null,
+      "kind": "from"
+    },
+    {
+      "module": "mistake_log",
+      "name": "build_mistake_log",
+      "alias": null,
+      "kind": "from"
+    },
+    {
+      "module": "mistake_log",
+      "name": "count_entries_by_type",
+      "alias": null,
+      "kind": "from"
+    },
+    {
+      "module": "mistake_log",
+      "name": "log_entry",
+      "alias": null,
+      "kind": "from"
+    },
+    {
+      "module": "mistake_log",
+      "name": "write_mistake_log",
+      "alias": null,
+      "kind": "from"
+    },
+    {
+      "module": "scan_jargon",
+      "name": "scan_jargon",
+      "alias": null,
+      "kind": "from"
+    },
+    {
+      "module": "schemas_f2",
+      "name": "SCORE_TO_BAND",
+      "alias": null,
+      "kind": "from"
+    },
+    {
+      "module": "schemas_f2",
+      "name": "STEP_DEPENDENCY_MAP",
+      "alias": null,
+      "kind": "from"
+    },
+    {
+      "module": "schemas_f2",
+      "name": "validate_dm_104",
+      "alias": null,
+      "kind": "from"
+    },
+    {
+      "module": "schemas_f2",
+      "name": "validate_dm_105",
+      "alias": null,
+      "kind": "from"
+    },
+    {
+      "module": "sys",
+      "alias": null,
+      "kind": "import"
+    },
+    {
+      "module": "metrics",
+      "name": "capture_metrics",
+      "alias": null,
+      "kind": "from"
+    },
+    {
+      "module": "os",
+      "alias": "_os",
+      "kind": "import"
+    }
+  ],
+  "calls": [
+    {
+      "caller": "_stub_propose",
+      "callee": "profiling_data.get"
+    },
+    {
+      "caller": "_stub_propose",
+      "callee": "all"
+    },
+    {
+      "caller": "_stub_propose",
+      "callee": "d.get"
+    },
+    {
+      "caller": "_stub_propose",
+      "callee": "det.get"
+    },
+    {
+      "caller": "_stub_propose",
+      "callee": "det.get"
+    },
+    {
+      "caller": "_stub_propose",
+      "callee": "det.get"
+    },
+    {
+      "caller": "_stub_propose",
+      "callee": "append"
+    },
+    {
+      "caller": "_stub_propose",
+      "callee": "det.get"
+    },
+    {
+      "caller": "_stub_propose",
+      "callee": "append"
+    },
+    {
+      "caller": "_stub_propose",
+      "callee": "det.get"
+    },
+    {
+      "caller": "_stub_propose",
+      "callee": "append"
+    },
+    {
+      "caller": "_stub_propose",
+      "callee": "det.get"
+    },
+    {
+      "caller": "_stub_propose",
+      "callee": "len"
+    },
+    {
+      "caller": "_stub_propose",
+      "callee": "append"
+    },
+    {
+      "caller": "_stub_propose",
+      "callee": "get"
+    },
+    {
+      "caller": "_stub_propose",
+      "callee": "profiling_data.get"
+    },
+    {
+      "caller": "_stub_propose",
+      "callee": "columns.items"
+    },
+    {
+      "caller": "_stub_propose",
+      "callee": "col_info.get"
+    },
+    {
+      "caller": "_stub_propose",
+      "callee": "col_info.get"
+    },
+    {
+      "caller": "_stub_propose",
+      "callee": "append"
+    },
+    {
+      "caller": "_stub_propose",
+      "callee": "append"
+    },
+    {
+      "caller": "_stub_review",
+      "callee": "transformation_plan.get"
+    },
+    {
+      "caller": "_stub_review",
+      "callee": "t.get"
+    },
+    {
+      "caller": "_stub_review",
+      "callee": "reviews.append"
+    },
+    {
+      "caller": "_stub_verify_output",
+      "callee": "len"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "approved_plan.get"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "len"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "t.get"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "min"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "max"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "len"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "title"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "step_name.replace"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "t.get"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "t.get"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "SCORE_TO_BAND.get"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "impact_parts.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "impact_parts.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "impact_parts.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "join"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "approved_plan.get"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "r.get"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "r.get"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "r.get"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "r.get"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "approved_plan.get"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "s.get"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "s.get"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "s.get"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "join"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "flag.get"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "flag.get"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "verification_result.get"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "verification_result.get"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "verification_result.get"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "verification_result.get"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "verification_result.get"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "sum"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "mistake_log_counts.values"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "mistake_log_counts.items"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "lines.append"
+    },
+    {
+      "caller": "_stub_generate_report",
+      "callee": "join"
+    },
+    {
+      "caller": "_merge_to_approved_plan",
+      "callee": "review_output.get"
+    },
+    {
+      "caller": "_merge_to_approved_plan",
+      "callee": "transformation_plan.get"
+    },
+    {
+      "caller": "_merge_to_approved_plan",
+      "callee": "review_by_id.get"
+    },
+    {
+      "caller": "_merge_to_approved_plan",
+      "callee": "approved.append"
+    },
+    {
+      "caller": "_merge_to_approved_plan",
+      "callee": "t.get"
+    },
+    {
+      "caller": "_merge_to_approved_plan",
+      "callee": "t.get"
+    },
+    {
+      "caller": "_merge_to_approved_plan",
+      "callee": "t.get"
+    },
+    {
+      "caller": "_merge_to_approved_plan",
+      "callee": "review_output.get"
+    },
+    {
+      "caller": "_merge_to_approved_plan",
+      "callee": "rejected.append"
+    },
+    {
+      "caller": "_merge_to_approved_plan",
+      "callee": "review.get"
+    },
+    {
+      "caller": "_merge_to_approved_plan",
+      "callee": "review.get"
+    },
+    {
+      "caller": "_merge_to_approved_plan",
+      "callee": "STEP_DEPENDENCY_MAP.items"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "load_feature1_outputs"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "print"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "CleaningPipelineError"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "build_mistake_log"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "print"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "print"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "hooks.get"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "propose_hook"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "print"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "_stub_propose"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "validate_dm_104"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "print"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "transformation_plan.get"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "print"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "print"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "print"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "hooks.get"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "light_hook"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "_stub_light_verification"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "lv_result.get"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "print"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "log_entry"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "_os.path.join"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "raw_df.to_csv"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "print"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "lv_result.get"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "propose_hook"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "_execute_standard_path"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "_execute_standard_path"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "print"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "capture_metrics"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "r.get"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "all_flags.append"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "hooks.get"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "verify_hook"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "print"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "_stub_verify_output"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "print"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "verification_result.get"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "print"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "print"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "count_entries_by_type"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "hooks.get"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "report_hook"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "print"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "_stub_generate_report"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "hooks.get"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "scan_jargon"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "log_entry"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "join"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "deliver_cleaning_outputs"
+    },
+    {
+      "caller": "run_cleaning_pipeline",
+      "callee": "write_mistake_log"
+    },
+    {
+      "caller": "_execute_standard_path",
+      "callee": "print"
+    },
+    {
+      "caller": "_execute_standard_path",
+      "callee": "print"
+    },
+    {
+      "caller": "_execute_standard_path",
+      "callee": "hooks.get"
+    },
+    {
+      "caller": "_execute_standard_path",
+      "callee": "review_hook"
+    },
+    {
+      "caller": "_execute_standard_path",
+      "callee": "print"
+    },
+    {
+      "caller": "_execute_standard_path",
+      "callee": "_stub_review"
+    },
+    {
+      "caller": "_execute_standard_path",
+      "callee": "validate_dm_105"
+    },
+    {
+      "caller": "_execute_standard_path",
+      "callee": "print"
+    },
+    {
+      "caller": "_execute_standard_path",
+      "callee": "_merge_to_approved_plan"
+    },
+    {
+      "caller": "_execute_standard_path",
+      "callee": "len"
+    },
+    {
+      "caller": "_execute_standard_path",
+      "callee": "len"
+    },
+    {
+      "caller": "_execute_standard_path",
+      "callee": "print"
+    },
+    {
+      "caller": "_execute_standard_path",
+      "callee": "print"
+    },
+    {
+      "caller": "_execute_standard_path",
+      "callee": "execute_transformations"
+    }
+  ]
+}
