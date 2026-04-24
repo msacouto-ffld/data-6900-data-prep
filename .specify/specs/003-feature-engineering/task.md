@@ -125,7 +125,7 @@
 
 - [ ] T024 [USA] Implement no-opportunity fast-path per RQ-013 — accept `dataset_summary` and `validation_result`. Check if the dataset has ≤2 columns OR every column is a unique identifier (all values unique). If so, skip the entire propose → challenge → execute loop and produce a no-opportunity report directly: the transformation report states "no feature engineering opportunities" with a specific reason, the data dictionary states no features were created, and the output CSV is identical to the input. Return a flag indicating whether the fast-path was triggered. This is called by T025 (orchestration) before entering the batch loop.
 
-- [ ] T025 [USA] Wire pipeline orchestration — connect T006 through T023 in execution order: validate_handoff → scan_pii → generate_dataset_summary → check fast-path (T024) → if not fast-path: loop over 6 batch types calling propose_features (T009) and challenge_features (T013) per batch → execute_transformations (T014–T019 in batch order, alphabetical within each batch) → scan_jargon → generate_report → generate_dictionary → deliver_outputs. Manage the running `approved_features_so_far` tracker between batches. Halt the pipeline on any hard-gate failure with the appropriate error message. Log every pipeline event via `log_event`. Note: `verify_output` is not in this sequence yet — it is added in Phase 4 (T038).
+- [ ] T025 [USA] Wire pipeline orchestration — connect T006 through T023 in execution order: validate_handoff → scan_pii → generate_dataset_summary → check fast-path (T024) → if not fast-path: loop over 6 batch types calling propose_features (T009) and challenge_features (T013) per batch → execute_transformations (T014–T019 in batch order, alphabetical within each batch) → scan_jargon → generate_report → generate_dictionary → deliver_outputs. Manage the running `approved_features_so_far` tracker between batches. Halt the pipeline on any hard-gate failure with the appropriate error message. Log every pipeline event via `log_event`.
 
 ### Evaluation Tasks
 
@@ -217,6 +217,7 @@ validate_handoff → scan_pii → generate_dataset_summary
   → [Batch 5: propose + challenge] → [Batch 6: propose + challenge]
   → execute_transformations (in batch order, alphabetical within batch)
   → verify_output
+  → evaluate_features (model comparison)
   → scan_jargon → generate_report → generate_dictionary → deliver_outputs
 ```
 
