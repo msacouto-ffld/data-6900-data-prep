@@ -48,6 +48,8 @@ Skill B takes the cleaned CSV produced by Skill A and engineers new features fro
 | PII detection: basic warning only in MVP | Security §PII | ✅ Covered — PII re-check added (spec gap resolved): reads PII flags from Skill A's transform-metadata.json (carried forward from Feature 1), heuristic scan if not |
 | Mistake Logging: each skill maintains structured log, no raw data | Core Principles §II | ✅ Covered — FR-221, FR-222, append-as-you-go implementation |
 | AI as Overconfident Intern: LLM code never executed directly | Core Principles §II | ✅ Covered — execution script uses pre-built code paths, LLM implementation_hint is advisory only |
+| Benchmark results on at least two datasets | Project spec §Deliverables | ✅ Covered — evaluate_features.py runs on every pipeline execution; T045 produces the full cross-dataset benchmark |
+| Recommendation: AI vs deterministic rules | Project spec §Deliverables | ✅ Covered — T045 includes the recommendation paragraph |
 
 **Summary**: All rules passing. 1 former blocker resolved (handoff contract now defined). 1 spec gap resolved (PII re-check added). No violations.
 
@@ -76,6 +78,7 @@ Skill B takes the cleaned CSV produced by Skill A and engineers new features fro
 | Batch rejection cap | Max 5 rejected features per batch before remaining are dropped without retry | Contracts revision |
 | Out-of-type proposals | Queued for correct batch, not dropped | Contracts revision |
 | Aggregate implementation | `groupby().agg()` + merge pattern for efficiency | RQ-006 |
+| Feature value comparison | Lightweight model comparison (baseline vs engineered, RandomForest + 5-fold CV) included in every transformation report. Full benchmark across 2+ datasets as one-time project deliverable (T045). Auto-detects target column; skips gracefully if none found. | Professor feedback + project spec §Testing |
 | Text features (new scope) | Basic: string length, word count, regex patterns. No NLP. | Client brief analysis |
 | Aggregate features (new scope) | Group-level metrics mapped to rows via groupby + transform. Industry-standard financial/retail KPIs supported. | Client brief analysis |
 
