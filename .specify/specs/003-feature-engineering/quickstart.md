@@ -233,10 +233,6 @@ If corrections are needed:
 
 ---
 
-INSTRUCTIONS: In quickstart.md, find "## Step 7 — Report and Dictionary Generation" and paste EVERYTHING below this line in its place. Then find "## Step 8 — Download" and change it to "## Step 9 — Download".
-
----
-
 ## Step 7 — Feature Value Comparison
 
 The system evaluates whether the engineered features actually improved model performance compared to the original features alone. The user sees:
