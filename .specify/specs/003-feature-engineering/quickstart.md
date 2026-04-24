@@ -233,7 +233,46 @@ If corrections are needed:
 
 ---
 
-## Step 7 — Report and Dictionary Generation
+INSTRUCTIONS: In quickstart.md, find "## Step 7 — Report and Dictionary Generation" and paste EVERYTHING below this line in its place. Then find "## Step 8 — Download" and change it to "## Step 9 — Download".
+
+---
+
+## Step 7 — Feature Value Comparison
+
+The system evaluates whether the engineered features actually improved model performance compared to the original features alone. The user sees:
+
+📊 Evaluating feature value...
+   Target column: nobeyesdad
+   Task type: classification
+   Model: RandomForest (n_estimators=100, max_depth=30)
+   Evaluation: 5-fold cross-validation
+
+   BASELINE (16 original features)
+     Accuracy: 0.6809 (±0.0329)
+     F1 Weighted: 0.6319 (±0.0238)
+
+   WITH ENGINEERED FEATURES (35 total features)
+     Accuracy: 0.8241 (±0.0394)
+     F1 Weighted: 0.8080 (±0.0436)
+
+   DELTA
+     Accuracy: +0.1432
+     F1 Weighted: +0.1761
+
+   ✅ Engineered features improved accuracy by 0.1432
+
+This comparison proves the features added real value — the personas validated the process (features are computed correctly and make sense), but this model comparison validates the outcome (features actually help a model perform better).
+
+If the system cannot identify a target column:
+
+📊 Feature value comparison: skipped — could not identify
+   a target column. To enable, specify the target column name.
+
+The comparison results are included in the transformation report's Feature Value Comparison section.
+
+---
+
+## Step 8 — Report and Dictionary Generation
 
 The system generates the transformation report and data dictionary. The user sees:
 
@@ -292,7 +331,7 @@ The data dictionary follows inline, then the download links.
 
 ---
 
-## Step 8 — Download
+## Step 9 — Download
 
 The system presents downloadable files:
 
