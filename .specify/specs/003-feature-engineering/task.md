@@ -189,6 +189,8 @@
 
 - [ ] T044 Skill A integration test — when Skill A is fully implemented, run an end-to-end test where Skill A processes a raw CSV and Skill B consumes Skill A's three-artifact output (cleaned CSV + transform-report.md + transform-metadata.json). Verify the handoff contract validation passes with real Skill A output (not synthetic fixtures). Confirm PII flags are correctly read from `transform-metadata.json`. **Note: this task is blocked on Skill A's delivery and may not be completable within Skill B's implementation timeline.** If Skill A is not ready, document the dependency and defer.
 
+- [ ] T045 Full feature value benchmark — run the model comparison across at least 2 datasets. For each: run Skill B end-to-end, run evaluate_features.py for the performance delta, document baseline vs engineered metrics. Produce a summary table comparing deltas across datasets. Write a 1-paragraph recommendation on where AI-assisted feature engineering adds the most value vs where deterministic rules would be sufficient. This is the deliverable the project spec requires under "Benchmark results on at least two datasets."
+
 **Checkpoint**: Skill B is complete. All evaluations pass. The pipeline runs reliably across multiple fixtures without state issues. The mistake log captures all event types. Skill A integration is verified (or deferred with documented dependency). Ready for Phase 3 constitution acceptance tests (NYC TLC, Instacart/Dunnhumby, UCI — see Notes).
 
 ---
