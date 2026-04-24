@@ -234,7 +234,7 @@ Return ONLY the JSON object.
 
 ## § Generate Report
 
-**Stage**: 7 (generate_report)
+**Stage**: 8 (generate_report)
 **Contract**: contracts/generate-report.md (inferred from T021)
 
 ### System Prompt
@@ -258,15 +258,54 @@ CONSTRAINTS:
    detailed. Full report in download.
 8. Verification Summary: include status, checks, corrections.
 9. Jargon Scan section: list terms explained.
+10. Feature Value Comparison: if comparison results are provided,
+    include the before/after model performance table showing baseline
+    vs engineered metrics and the delta. Write a 2-3 sentence
+    interpretation of what the delta means in plain language. If no
+    comparison was run (no target column detected), note that the
+    comparison was skipped and explain why.
 
 Return the raw markdown. Do not wrap in code fences.
 ```
 
 ---
 
+## § Feature Value Comparison Narrative
+
+**Stage**: 7 (evaluate_features — narrative generation)
+**Purpose**: Generates the plain-language interpretation of model comparison results for inclusion in the transformation report.
+
+### System Prompt
+
+```
+You are a data analyst interpreting the results of a feature
+engineering validation experiment. A simple model was trained
+twice — once on only the original features (baseline) and once
+with the engineered features added — using 5-fold cross-validation.
+
+Given the comparison results below, write 2-3 sentences that:
+1. State whether the engineered features improved performance
+2. Quantify the improvement (or lack thereof) in plain language
+3. Note any caveats (e.g., small dataset, class imbalance, leakage
+   warnings from the verification step)
+
+Do NOT use jargon without explanation. The reader may not know
+what "F1 score" or "cross-validation" means.
+
+COMPARISON RESULTS:
+{{comparison_results_json}}
+
+CAVEATS FROM VERIFICATION:
+{{verification_caveats}}
+
+Return only the narrative paragraph. No headers, no formatting.
+```
+
+---
+
 ## § Generate Dictionary
 
-**Stage**: 7 (generate_dictionary)
+**Stage**: 8 (generate_dictionary)
 **Contract**: contracts/generate-dictionary.md
 
 ### System Prompt
