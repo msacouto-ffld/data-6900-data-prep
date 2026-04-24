@@ -481,7 +481,21 @@ how many rejected, any batches skipped and why.}
 
 **Confirmed Accurate:**
 - {list of verified aspects}
+---
 
+## Feature Value Comparison
+
+| | {Primary Metric} | {Secondary Metric} |
+|---|---|---|
+| Baseline ({n} original features) | {value} (±{std}) | {value} (±{std}) |
+| With engineered features ({n} total) | {value} (±{std}) | {value} (±{std}) |
+| **Delta** | **{+/-value}** | **{+/-value}** |
+
+**Model:** RandomForest (n_estimators=100, max_depth=30, seed=42)  
+**Evaluation:** 5-fold stratified cross-validation  
+**Target column:** {target_column}
+
+{2-3 sentence plain-language interpretation of results}
 ---
 
 ## Jargon Scan
