@@ -33,6 +33,7 @@ Pipeline Progress:
 - [ ] Batch 6: Normalization / Scaling — propose + challenge
 - [ ] Execute all approved transformations
 - [ ] Data Analyst verification
+- [ ] Evaluate feature value (model comparison)
 - [ ] Generate report + dictionary
 - [ ] Jargon scan
 - [ ] Deliver outputs
@@ -129,7 +130,38 @@ Writes `{run_id}-engineered.csv`.
 
 LLM call using [PROMPTS.md](PROMPTS.md) § Verify Output. Data Analyst applies 9-item checklist: row count preserved, original columns intact, feat_ prefix, expected columns present, no unexpected NaN, no infinity, encoding correct, scaling correct, no data leakage. Returns DM-008 JSON.
 
-### Stage 7: Generate report + dictionary
+### Stage 7: Evaluate feature value
+
+Run `scripts/evaluate_features.py`. Trains a simple model (RandomForest) on the original features only (baseline), then on original + engineered features, and compares performance using 5-fold cross-validation. This is the external quality control that proves the engineered features actually add value — the personas validate the process, but only a model comparison validates the outcome.
+
+The script auto-detects the target column (looks for common names like `target`, `label`, `class`, or the last categorical column with 2–20 unique values). If no target is found, the comparison is skipped with a note.
+
+Output is a comparison table included in the transformation report:
+
+```
+📊 Evaluating feature value...
+   Target column: nobeyesdad
+   Task type: classification
+   Model: RandomForest (n_estimators=100, max_depth=30)
+
+   BASELINE (16 original features)
+     Accuracy: 0.6809 (±0.0329)
+     F1 Weighted: 0.6319 (±0.0238)
+
+   WITH ENGINEERED FEATURES (35 total features)
+     Accuracy: 0.8241 (±0.0394)
+     F1 Weighted: 0.8080 (±0.0436)
+
+   DELTA
+     Accuracy: +0.1432
+     F1 Weighted: +0.1761
+
+   ✅ Engineered features improved accuracy by 0.1432
+```
+
+If no target is detected, comparison is skipped gracefully — it does not halt the pipeline.
+
+### Stage 8: Generate report + dictionary
 
 Two parallel LLM calls:
 
@@ -139,7 +171,7 @@ Two parallel LLM calls:
 
 Then run `scripts/scan_jargon.py` on both. Checks ~24 method-specific terms (one-hot encoding, z-score, normalization, etc.) for first-use explanations. If violations found, one LLM call to add definitions.
 
-### Stage 8: Deliver outputs
+### Stage 9: Deliver outputs
 
 Run `scripts/deliver_outputs.py`. Displays report and dictionary inline. Presents downloads:
 
@@ -178,5 +210,5 @@ df.filter(like='feat_') to select them.
 
 ## Reference Files
 
-- [PROMPTS.md](PROMPTS.md) — all LLM prompt templates (7 sections: propose, 3 personas, verify, report, dictionary)
-- `scripts/` — all pipeline scripts and utilities
+- [PROMPTS.md](PROMPTS.md) — all LLM prompt templates (8 sections: propose, 3 personas, verify, evaluate narrative, report, dictionary)
+- `scripts/` — all pipeline scripts and utilities (including evaluate_features.py)
